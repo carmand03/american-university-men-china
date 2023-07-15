@@ -1,0 +1,74 @@
+"NameID"	"Name"	"Chinese"	"Pinyin"	"Position"	"Organisation"	"Type"	"Type2"	"Sublevel"	"Location"	"Status"	"Start_year"	"Start_month"	"End"	"End_month"	
+"N00008"	"HSU WEI-CHEN"	"徐維震"	"Xu Weizhen"	"Legal Adviser"	"Central Bank of China"	"Administration"	"Central"		"Nanjing"	"Past"	1933		1936		
+"N00006"	"HO SHIH-CHEN"	"何世植"	"He Shizhi"	"President"	"Ch'ih Tze University"	"University"	"General"		"Shanghai"	"Current"	1930				
+"N00005"	"CH'EN TING-JUI"	"陳霆銳"	"Chen Tingrui"	"Legal Practitioner"	"Chen's Private Practice"	"Business"	"Private practice"		"Shanghai"	"Current"	1923				
+"N00007"	"HSIANG CHEN-CHUN"	"向哲濬"	"Xiang Zhejun"	"Secretary"	"Chinese Commission for Investigation of Extraterritoriality"	"Administration"	"Commission"			"Past"	1926		1928		
+"N00003"	"CHANG YU-CH'UAN"	"張煜全"	"Zhang Yuquan"	"President"	"Chinese Social and Political Science Association"	"Association"	"Professional"		"Beijing"	"Past"					
+"N00009"	"HU YI-KU"	"胡諳穀"	"Hu Angu"	"Vice-President"	"Chinkiang District Court"	"Judiciary"	"Local Court"			"Past"	1927		1932		
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Professor"	"Comparative Law School of China"	"University"	"Specialized"		"Shanghai"	"Current"	1933	"October"			
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Principal"	"Comparative Law School of China"	"University"	"Specialized"		"Shanghai"	"Current"	1928				
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Counsellor"	"Executive Yuan"	"Government"	"Central"		"Nanjing"	"Past"	1933	"July"	1933	"September"	
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"President"	"Judicial Yuan"	"Government"	"Central"		"Nanjing"	"Past"	1928	"October"	1931	"December"	
+"N00009"	"HU YI-KU"	"胡諳穀"	"Hu Angu"	"Chief Procurator"	"Kiangsu High Court"	"Judiciary"	"Local Court"		"Suzhou"	"Current"	1933	"July"			
+"N00008"	"HSU WEI-CHEN"	"徐維震"	"Xu Weizhen"	"President"	"Kiangsu High Court"	"Judiciary"	"Local Court"	"Second Branch"		"Current"	1936	"January"			
+"N00008"	"HSU WEI-CHEN"	"徐維震"	"Xu Weizhen"	"Special Administrative Commissioner"	"Kiangsu Provincial Government"	"Government"	"Local Government"		"Nanjing"	"Past"	1933				
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Committee Member"	"Kuomintang"	"Party"		"Central Supervisory Committee"	"Nanjing"	"Current"	1929	"March"			
+"N00006"	"HO SHIH-CHEN"	"何世植"	"He Shizhi"	"Reserve Member"	"Kuomintang"	"Party"		"Central Executive Committee"	"Nanjing"	"Current"	1931	"December"			
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Technical Adviser"	"League of Nations"	"International"		"Delegation to League of Nations Extraordinary Assembly"		"Past"	1930		1932		
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Member"	"Legislative Yuan"	"Government"	"Central"	"Constitution Drafting Committee"	"Nanjing"	"Current"	1933	"February"			
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Vice-Chairman"	"Legislative Yuan"	"Government"	"Central"	"Constitution Drafting Committee"	"Nanjing"	"Current"	1933	"February"			
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Barrister-at-law"	"Middle Temple Society"	"Association"			"London"	"Past"					
+"N00002"	"CHANG F-YUN"	"張福運"	"Zhang Fuyun"	"Director"	"Ministry of Communications"	"Government"	"Central"	"Navigation Department"	"Beijing"	"Past"	1922		1926		
+"N00016"	"YU WEN TS'AN"	"余文燦"	"Yu Wencan"	"Director of General Affairs"	"Ministry of Education"	"Government"	"Central"		"Nanjing"	"Past"					
+"N00002"	"CHANG F-YUN"	"張福運"	"Zhang Fuyun"	"Director"	"Ministry of Finance"	"Government"	"Central"	"Customs Administration"	"Beijing"	"Past"	1932		1934		
+"N00001"	"CHANG CH'IEN"	"張謙"	"Zhang Qian"	"Charge d'Affaires"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Charge d'Affaires at Santiago"	"Santiago"	"Past"	1929		1932		
+"N00001"	"CHANG CH'IEN"	"張謙"	"Zhang Qian"	"Consul-General"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Consulate at San Francisco"	"San Francisco"	"Past"	1929		1932		
+"N00001"	"CHANG CH'IEN"	"張謙"	"Zhang Qian"	"Consul-General"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Consulate at New York"	"New York"	"Past"	1929		1932		
+"N00003"	"CHANG YU-CH'UAN"	"張煜全"	"Zhang Yuquan"	"Counsellor"	"Ministry of Foreign Affairs"	"Government"	"Central"		"Beijing"	"Past"					
+"N00015"	"YANG YUNG-CH'ING"	"楊永淸"	"Yang Yongqing"	"Departmental Director"	"Ministry of Foreign Affairs"	"Government"	"Central"			"Past"					
+"N00001"	"CHANG CH'IEN"	"張謙"	"Zhang Qian"	"Minister"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Minister to Chile"	"Santiago"	"Current"	1932	"November"			
+"N00011"	"LI CHING-LUN"	"李錦綸"	"Li Jinguan"	"Minister"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Minister to Mexico"	"Mexico"	"Past"	1928	"October"	1929	"November"	
+"N00011"	"LI CHING-LUN"	"李錦綸"	"Li Jinguan"	"Minister"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Minister to Poland"	"Poland"	"Past"	1933	"October"	1934	"May"	
+"N00011"	"LI CHING-LUN"	"李錦綸"	"Li Jinguan"	"Minister"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Minister to Portugal"	"Portugal"	"Current"	1934	"July"			
+"N00011"	"LI CHING-LUN"	"李錦綸"	"Li Jinguan"	"Officiating Minister"	"Ministry of Foreign Affairs"	"Government"	"Central"			"Past"	1930		1931		
+"N00011"	"LI CHING-LUN"	"李錦綸"	"Li Jinguan"	"Political Vice- Minister"	"Ministry of Foreign Affairs"	"Government"	"Central"			"Past"	1930		1931		
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Second Secretary"	"Ministry of Foreign Affairs"	"Government"	"Consulate/Legation"	"Legation in Washington"	" D.C."	"Washington"	" D.C."	"Past"	1929		1930
+"N00015"	"YANG YUNG-CH'ING"	"楊永淸"	"Yang Yongqing"	"Secretary"	"Ministry of Foreign Affairs"	"Government"	"Central"			"Past"					
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Senior Secretary"	"Ministry of Foreign Affairs"	"Government"	"Central"		"Nanjing"	"Past"	1933	"July"	1933	"September"	
+"N00008"	"HSU WEI-CHEN"	"徐維震"	"Xu Weizhen"	"Counsellor"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1932				
+"N00010"	"KUO YUN-KUAN"	"郭雲觀"	"Guo Yunguan"	"Counsellor"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1932	"May"	1932	"October"	
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Minister"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1924	"January"			
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Minister"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1927		1928		
+"N00006"	"HO SHIH-CHEN"	"何世植"	"He Shizhi"	"Political Vice-Minister"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1932	"January"	1932	"June"	
+"N00007"	"HSIANG CHEN-CHUN"	"向哲濬"	"Xiang Zhejun"	"Secretary"	"Ministry of Justice"	"Government"	"Central"		"Nanjing"	"Past"	1928		1932		
+"N00002"	"CHANG F-YUN"	"張福運"	"Zhang Fuyun"	"Director"	"National Economic Council"	"Administration"	"Commission"	"Research Division"	"Beijing"	"Current"	1934	"July"			
+"N00016"	"YU WEN TS'AN"	"余文燦"	"Yu Wencan"	"Technical Expert"	"National Economic Council"	"Administration"	"Commission"	"Research Division"		"Current"	1934	"July"			
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"State Councillor"	"National Government"	"Government"	"Central"		"Nanjing"	"Past"	1928	"October"	1931	"December"	
+"N00004"	"CH'EN JU HSUAN"	"陳茹玄"	"Chen Ruxuan"	"Chief Secretary"	"National Reconstruction Commission"	"Administration"	"Commission"		"Nanjing"	"Current"	1929		1931		
+"N00002"	"CHANG F-YUN"	"張福運"	"Zhang Fuyun"	"President"	"Peiping Communications University"	"University"	"Specialized"		"Beijing"	"Past"	1928		1932		
+"N00016"	"YU WEN TS'AN"	"余文燦"	"Yu Wencan"	"Principal"	"Peiping Customs College"	"University"	"Specialized"		"Beijing"	"Past"					
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Elected Deputy Judge"	"Permanent Court of International Justice"	"International"				"Past"	1921				
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Elected Deputy Judge"	"Permanent Court of International Justice"	"International"				"Past"	1922	"July"	1922	"December"	
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Elected Judge"	"Permanent Court of International Justice"	"International"				"Current"	1930	"September"			
+"N00007"	"HSIANG CHEN-CHUN"	"向哲濬"	"Xiang Zhejun"	"Secretary"	"Russo-Asiatic Bank"	"Administration"	"Commission"	"General Liquidator's Office"		"Past"	1926		1928		
+"N00007"	"HSIANG CHEN-CHUN"	"向哲濬"	"Xiang Zhejun"	"Chief Procurator"	"Shanghai First Special Area District Court"	"Judiciary"	"Local Court"		"Shanghai"	"Current"	1933	"November"			
+"N00010"	"KUO YUN-KUAN"	"郭雲觀"	"Guo Yunguan"	"President"	"Shanghai First Special Area District Court"	"Judiciary"	"Local Court"		"Shanghai"	"Current"	1932	"November"			
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Adviser"	"Shanghai Municipal Council"	"Government"	"Local Government"		"Shanghai"	"Past"	1931	"May"	1933	"January"	
+"N00005"	"CH'EN TING-JUI"	"陳霆銳"	"Chen Tingrui"	"Committee Member"	"Shanghai Municipal Council"	"Government"	"Local Government"		"Shanghai"	"Past"	1928	"April"	1934	"March"	
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Judge"	"Shanghai Provisional Court"	"Judiciary"	"Local Court"		"Shanghai"	"Past"	1928				
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Judge"	"Shanghai Provisional Court"	"Judiciary"	"Local Court"		"Shanghai"	"Past"	1927				
+"N00006"	"HO SHIH-CHEN"	"何世植"	"He Shizhi"	"President"	"Shanghai Provisional Court"	"Judiciary"	"Local Court"		"Shanghai"	"Past"	1929				
+"N00008"	"HSU WEI-CHEN"	"徐維震"	"Xu Weizhen"	"President"	"Shanghai Provisional Court"	"Judiciary"	"Local Court"		"Shanghai"	"Past"	1927		1931		
+"N00007"	"HSIANG CHEN-CHUN"	"向哲濬"	"Xiang Zhejun"	"President"	"Soochow District Court"	"Judiciary"	"Local Court"		"Suzhou"	"Past"	1933				
+"N00015"	"YANG YUNG-CH'ING"	"楊永淸"	"Yang Yongqing"	"President"	"Soochow University"	"University"	"General"			"Current"	1927	"October"			
+"N00004"	"CH'EN JU HSUAN"	"陳茹玄"	"Chen Ruxuan"	"Vice-President"	"Southeastern University"	"University"	"General"		"Nanjing"	"Past"	1926				
+"N00009"	"HU YI-KU"	"胡諳穀"	"Hu Angu"	"Acting Chief Justice"	"Supreme Court"	"Judiciary"	"Central Court"			"Past"			1927		
+"N00013"	"WANG CH'UNG-HUI"	"王寵惠"	"Wang Chonghui"	"Chief Justice"	"Supreme Court"	"Judiciary"	"Central Court"			"Past"	1920				
+"N00010"	"KUO YUN-KUAN"	"郭雲觀"	"Guo Yunguan"	"Judge"	"Supreme Court"	"Judiciary"	"Central Court"			"Past"	1922		1925		
+"N00012"	"LIANG YUEN-LI"	"梁鋆立"	"Liang Yunli"	"Managing Editor"	"The China Law Review"	"Media"	"Periodical"		"Shanghai"	"Current"					
+"N00001"	"CHANG CH'IEN"	"張謙"	"Zhang Qian"	"President"	"Tientsin Rotary Club"	"Association"	"Club"		"Tianjin"	"Past"					
+"N00003"	"CHANG YU-CH'UAN"	"張煜全"	"Zhang Yuquan"	"President"	"Tsing Hua College"	"University"	"General"		"Beijing"	"Current"	1929				
+"N00003"	"CHANG YU-CH'UAN"	"張煜全"	"Zhang Yuquan"	"Professor"	"Tsing Hua College"	"University"	"General"	"Political Science"	"Beijing"	"Current"	1929				
+"N00014"	"WU CHING-HSIUNG"	"吳經熊"	"Wu Jingxiong"	"Legal Practitioner"	"Wu's Private Practice"	"Business"	"Private practice"		"Shanghai"	"Current"	1928				
+"N00010"	"KUO YUN-KUAN"	"郭雲觀"	"Guo Yunguan"	"Acting Vice-President"	"Yenching University"	"University"	"General"		"Beijing"	"Past"	1926		1932		
+"N00010"	"KUO YUN-KUAN"	"郭雲觀"	"Guo Yunguan"	"Professor"	"Yenching University"	"University"	"General"	"Law School"	"Beijing"	"Past"	1926		1932		

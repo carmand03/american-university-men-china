@@ -1,0 +1,243 @@
+"MainField"	"Subfield"	"Affiliation_type"	"RecId"	"NameID"	"FullName"	"Chinese"	"Pinyin"	"Organisation"	"Type"	"Sublevel"	"Position"	"Rank"	"Status"	"Year_start"	"Year_end"	"Page"	"PDF"	"other_source"	
+"Engineering"	"Electrical Manufacture"	"Position"	"R00187"	"N00118"	"Robert Ting"	"丁佐成"	"Ding Zuocheng"	"China Scientific Instrument Company"	"Private company"				"Current"			104	127		
+"Engineering"	"Engineering Research"	"Position"	"R00210"	"N00136"	"S. H. Ting"	"丁嗣賢"	"Ding Sixian"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00207"	"N00133"	"C. K. Jen"	"任之恭"	"Ren Zhigong"	"Tsing-Hua University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Railway Engineering"	"Position"	"R00033"	"N00011"	"C. Y. Hou"	"侯家源"	"Hou Jiayuan"	"Hangchow-Kiangsan Railway"	"Railway/Infrastructure"		"Assistant director"	2	"Past"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00034"	"N00011"	"C. Y. Hou"	"侯家源"	"Hou Jiayuan"	"Hangchow-Kiangsan Railway"	"Railway/Infrastructure"		"Assistant chief engineer"	2	"Past"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00035"	"N00011"	"C. Y. Hou"	"侯家源"	"Hou Jiayuan"	"Hunan-Kweichow Railway"	"Railway/Infrastructure"		"Director"	1	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00036"	"N00011"	"C. Y. Hou"	"侯家源"	"Hou Jiayuan"	"Hunan-Kweichow Railway"	"Railway/Infrastructure"		"Chief engineer"	1	"Current"			93	116		
+"Engineering"	"Chemical Engineering"	"Position"	"R00054"	"N00026"	"Te-Pung Hou"	"侯德榜"	"Hou Debang"	"Yungli Soda Plant (Tangku"	" Tientsin)"	"Factory/mine/station"		"Chief engineer"	1	"Current"			94	117	
+"Engineering"	"Chemical Engineering"	"Position"	"R00055"	"N00026"	"Te-Pung Hou"	"侯德榜"	"Hou Debang"	"Yungli Chemical Industries Ltd"	"Private company"	"Synthetic Ammonia and Acid Plant"	"Manager"	1	"Current"			94	117		
+"Engineering"	"Chemical Engineering"	"Position"	"R00056"	"N00026"	"Te-Pung Hou"	"侯德榜"	"Hou Debang"	"Yungli Chemical Industries Ltd"	"Private company"	"Synthetic Ammonia and Acid Plant"	"Chief engineer"	1	"Current"			94	117		
+"Engineering"	"Chemical Engineering"	"Position"	"R00057"	"N00027"	"David Yu"	"俞大維"	"Yu Dawei"	"Ordnance Department"	"Central government/administration"		"Director-general"	1	"Current"			95	118		
+"Engineering"	"Railway Engineering"	"Position"	"R00016"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"Chiao-Tung University"	"Education/research"		"President"		"Past"	1924	1927	92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00011"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"American Bridge Company"	"Private company"		"Student engineer"		"Past"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00014"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"Canton-Hankow Railway"	"Railway/Infrastructure"	"Chuchow-Shaochow section"	"Director"		"Past"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00015"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"Canton-Hankow Railway"	"Railway/Infrastructure"	"Chuchow-Shaochow section"	"Engineer-in-chief"		"Past"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00012"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"Lunghai Railway"	"Railway/Infrastructure"	"Sianfu section"	"Director"		"Past"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00013"	"N00004"	"H. H. Ling"	"凌鴻勛"	"Ling Hongxun"	"Lunghai Railway"	"Railway/Infrastructure"	"Sianfu section"	"Engineer-in-chief"		"Past"			92	115		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00179"	"N00113"	"S. K. Lau"	"劉錫祺"	"Liu Xiqi"	"Chinese National Electric and Pottery Company"	"Private company"		"Founder"		"Past"			103	126		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00105"	"N00058"	"Ginntung S. Seetoo"	"司徒錫"	"Situ Xi"	"Ministry of Industries"	"Central government/administration"	"Wenchi Paper Mills"	"Technical expert"	2	"Current"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00104"	"N00058"	"Ginntung S. Seetoo"	"司徒錫"	"Situ Xi"	"Nanking-Shanghai Railway"	"Railway/Infrastructure"		"Acting managing director"	2	"Past"			97	120		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00151"	"N00095"	"H. P. Wu"	"吳新炳"	"Wu Xinbing"	"National Construction Commission"	"Central government/administration"	"Chi- Tse-Yeh Power Plant (Changchow)"	"Chief engineer"	2	"Current"			101	124		
+"Engineering"	"Chemical Engineering"	"Position"	"R00058"	"N00028"	"C. L. Wu"	"吳欽烈"	"Wu Qinlie"	"Research Institute of Physics and Chemistry"	"Education/research"		"Director"	1	"Current"			95	118		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00150"	"N00094"	"Y. L. Wu"	"吳玉麟"	"Wu Yulin"	"National Construction Commission"	"Central government/administration"	"Chi- Tse-Yeh Power Plant (Changchow)"	"Director"	2	"Current"			101	124		
+"Engineering"	"Engineering Research"	"Position"	"R00197"	"N00125"	"J. Chow"	"周仁"	"Zhou Ren"	"Academia Sinica"	"Education/research"	"Institute of engineering"	"Director"		"Current"			105	128		
+"Engineering"	"Textile Engineering"	"Position"	"R00135"	"N00087"	"Y. T. Chow"	"周延鼎"	"Zhou Yanding"	"Hangchow Silk Filature"	"Private company"		"Manager"	1	"Current"			100	123		
+"Engineering"	"Textile Engineering"	"Position"	"R00136"	"N00087"	"Y. T. Chow"	"周延鼎"	"Zhou Yanding"	"Hangchow Silk Filature"	"Private company"		"Engineer"	1	"Current"			100	123		
+"Engineering"	"Textile Engineering"	"Position"	"R00137"	"N00087"	"Y. T. Chow"	"周延鼎"	"Zhou Yanding"	"Wei-Lun Silk Filature"	"Private company"		"Manager"	1	"Current"			100	123		
+"Engineering"	"Textile Engineering"	"Position"	"R00138"	"N00087"	"Y. T. Chow"	"周延鼎"	"Zhou Yanding"	"Wei-Lun Silk Filature"	"Private company"		"Engineer"	1	"Current"			100	123		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00181"	"N00115"	"G. Chow"	"周琦"	"Zhou Qi"	"Chinese National Electric and Pottery Company"	"Private company"		"Founder"		"Past"			104	127		
+"Engineering"	"Municipal Works"	"Position"	"R00123"	"N00079"	"Z. Y. Chow"	"周象賢"	"Zhou Xiangxian"	"Hangchow Municipal Government"	"Local government/administration"		"Mayor"	1	"Past"			99	122		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00191"	"N00121"	"M. Chow"	"周銘"	"Zhou Ming"	"National Construction Commission"	"Central government/administration"	"Electrical manufacturing works"	"Consulting engineer"		"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00190"	"N00121"	"M. Chow"	"周銘"	"Zhou Ming"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			104	127		
+"Engineering"	"River Conservancy"	"Position"	"R00052"	"N00024"	"C. L. Chow"	"周鎭倫"	"Zhou Zhenlun"	"Chekiang Conservancy Bureau"	"Local government/administration"		"Chief engineer"	1	"Current"			94	117		
+"Engineering"	"Mining Engineering"	"Position"	"R00079"	"N00039"	"K. C. Chow"	"周開基"	"Zhou Kaiji"	"Tayeh Iron Works"	"Factory/mine/station"	"Mining department"	"Director"		"Current"			96	119		
+"Engineering"	"Naval Construction"	"Position"	"R00131"	"N00085"	"P. Y. Tang"	"唐炳源"	"Tang Bingyuan"	"Ching-Fong Weaving and Spinning Company"	" Ltd."	"Private company"		"Manager"	1	"Current"			100	123	
+"Engineering"	"Naval Construction"	"Position"	"R00132"	"N00085"	"P. Y. Tang"	"唐炳源"	"Tang Bingyuan"	"Ching-Fong Weaving and Spinning Company"	" Ltd."	"Private company"		"Chief engineer"	1	"Current"			100	123	
+"Engineering"	"Engineering Research"	"Position"	"R00218"	"N00142"	"H. W. Sun"	"孫學悟"	"Sun Xuewu"	"Golden Sea Research Institute"	"Education/research"		"Director"		"Current"			105	128		
+"Engineering"	"Railway Engineering"	"Position"	"R00028"	"N00009"	"P. T. Sun"	"孫寶墀"	"Sun Baochi"	"Chengtu-Chungking Railway"	"Railway/Infrastructure"	"Planning Division"	"Chief"	3	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00027"	"N00009"	"P. T. Sun"	"孫寶墀"	"Sun Baochi"	"Kiaochow-Tsinan Railway"	"Railway/Infrastructure"		"Engineer"		"Past"			93	116		
+"Engineering"	"Mining Engineering"	"Position"	"R00080"	"N00040"	"C. K. Sun"	"孫昌克"	"Sun Changke"	"Kai-Lou Coal Mining Company"	"Private company"		"Mining engineer"	2	"Current"			96	119		
+"Engineering"	"River Conservancy"	"Position"	"R00040"	"N00015"	"F. S. Shen"	"孫輔世"	"Sun Fushi"	"Tai-Hu Conservancy Board"	"Railway/Infrastructure"				"Past"			93	116		
+"Engineering"	"River Conservancy"	"Position"	"R00041"	"N00015"	"F. S. Shen"	"孫輔世"	"Sun Fushi"	"Yangtse River Commission"	"Railway/Infrastructure"		"Chief engineer"		"Current"			93	116		
+"Engineering"	"Municipal Works"	"Position"	"R00125"	"N00080"	"H. S. Sung"	"宋希尙"	"Song Xishang"	"Nanking Municipal Government"	"Local government/administration"	"Public Works Department"	"Director"	1	"Current"			99	122		
+"Engineering"	"Municipal Works"	"Position"	"R00124"	"N00080"	"H. S. Sung"	"宋希尙"	"Song Xishang"	"Yangtse River Commission"	"Railway/Infrastructure"		"Chief Engineer"	1	"Past"			99	122		
+"Engineering"	"River Conservancy"	"Position"	"R00053"	"N00025"	"T. C. Hsi"	"席德炯"	"Xi Dejiong"	"Kiang-Han Engineering Bureau (Hankow)"	"Local government/administration"		"Director"	1	"Current"			94	117		
+"Engineering"	"Engineering Research"	"Position"	"R00217"	"N00141"	"Ke-Chung Chang"	"張克忠"	"Zhang Kezhong"	"Golden Sea Research Institute"	"Education/research"		"Researcher"		"Current"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00216"	"N00141"	"Ke-Chung Chang"	"張克忠"	"Zhang Kezhong"	"Nankai University"	"Education/research"	"Applied Chemistry Research Lab"	"Researcher"		"Current"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00215"	"N00141"	"Ke-Chung Chang"	"張克忠"	"Zhang Kezhong"	"Li-Chung Chemical Works"	"Private company"		"Chief engineer"		"Past"			105	128		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00106"	"N00059"	"K. C. Chang"	"張可治"	"Zhang Kezhi"	"Ministry of Industries"	"Central government/administration"	"Central Machine Works"	"Chief engineer"	1	"Past"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00107"	"N00059"	"K. C. Chang"	"張可治"	"Zhang Kezhi"	"National Central University"	"Education/research"	"Mechanical department"	"Head"	1	"Current"			98	121		
+"Engineering"	"River Conservancy"	"Position"	"R00042"	"N00016"	"H. Y. Chang"	"張含英"	"Zhang Hanying"	"Yellow River Commission"	"Railway/Infrastructure"		"Chief engineer"		"Current"			94	117		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00148"	"N00092"	"C. C. Chang"	"張家祉"	"Zhang Jiazhi"	"National Construction Commission"	"Central government/administration"	"Electricity Division"	"Chief"	1	"Current"			101	124		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00182"	"N00116"	"Waken Chang"	"張惠康"	"Zhang Huikang"	"Asiatic Manufacturing Company"	"Private company"		"Manager"	1	"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00183"	"N00116"	"Waken Chang"	"張惠康"	"Zhang Huikang"	"Eastern Neon Light Company"	"Private company"		"Manager"	1	"Current"			104	127		
+"Engineering"	"Mining Engineering"	"Position"	"R00081"	"N00041"	"Chang Kin-Fan"	"張景芬"	"Zhang Jingfen"	"Fu-Kuo Coal Mining Company"	"Factory/mine/station"		"Chief engineer"	1	"Current"			96	119		
+"Engineering"	"River Conservancy"	"Position"	"R00051"	"N00023"	"T. L. Chang"	"張自立"	"Zhang Zili"	"Chekiang Conservancy Bureau"	"Local government/administration"		"Director"	1	"Current"			94	117		
+"Engineering"	"Municipal Works"	"Position"	"R00116"	"N00072"	"Henry Panhoe"	"彭回"	"Peng Hui"	"Canton Municipal Government"	"Local government/administration"				"Past"			99	122		
+"Engineering"	"River Conservancy"	"Position"	"R00045"	"N00019"	"S. T. Hsu"	"徐世大"	"Xu Shida"	"North River Commission"	"Railway/Infrastructure"		"Chief engineer"	1	"Current"			94	117		
+"Engineering"	"Municipal Works"	"Position"	"R00117"	"N00073"	"Paul H. Hsu"	"徐佩璜"	"Xu Peihuang"	"City Government of Greater Shanghai"	"Local government/administration"	"Bureau of Public Utilities"	"Director"	1	"Current"			99	122		
+"Engineering"	"Engineering Research"	"Position"	"R00209"	"N00135"	"M. T. Hsu"	"徐名材"	"Xu Mingcai"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Chemical Engineering"	"Position"	"R00065"	"N00034"	"Zai-Ziong Zee"	"徐善祥"	"Xu Shanxiang"	"Ministry of Industries"	"Central government/administration"		"Senior technical expert"	1	"Past"			95	118		
+"Engineering"	"Chemical Engineering"	"Position"	"R00066"	"N00034"	"Zai-Ziong Zee"	"徐善祥"	"Xu Shanxiang"				"Consulting engineer"		"Current"			95	118		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00157"	"N00098"	"U. D. Hsu"	"徐恩第"	"Xu Endi"	"Shanghai Nantao Electricity Company"	"Private company"		"Chief engineer"	1	"Current"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00147"	"N00091"	"C. Yun"	"憚震"	"Da Zhen"	"National Construction Commission"	"Central government/administration"	"Regulation board for the private electrical enterprises"	"Chairman"	1	"Current"			101	124		
+"Engineering"	"Chemical Engineering"	"Position"	"R00059"	"N00029"	"Z. C. Page"	"戴濟"	"Dai Ji"	"Yuan-Fong Color Works"	"Factory/mine/station"		"Engineer"		"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00074"	"N00036"	"Tseng Yang-Fu"	"曾養甫"	"Ceng Yangfu"	"Ministry of Railways"	"Central government/administration"		"Vice-minister"	1	"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00073"	"N00036"	"Tseng Yang-Fu"	"曾養甫"	"Ceng Yangfu"	"National Construction Commission"	"Central government/administration"		"Vice-president"	1	"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00071"	"N00036"	"Tseng Yang-Fu"	"曾養甫"	"Ceng Yangfu"	"Chang-shing Coal Mines"	"Factory/mine/station"				"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00070"	"N00036"	"Tseng Yang-Fu"	"曾養甫"	"Ceng Yangfu"	"Pittsburgh Valley Mining Company"	"Factory/mine/station"		"Assistant engineer"		"Past"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00072"	"N00036"	"Tseng Yang-Fu"	"曾養甫"	"Ceng Yangfu"	"Wei-Nan Coal Mines"	"Factory/mine/station"				"Current"			95	118		
+"Engineering"	"Architecture"	"Position"	"R00111"	"N00062"	"Pin Chu"	"朱彬"	"Zhu Bin"	"Kwan"	" Chu and Yang Architects and Engineers"	"Private company"				"Current"			98	121	
+"Engineering"	"Municipal Works"	"Position"	"R00121"	"N00077"	"Y. T. Chu"	"朱胞廷"	"Zhu Baoting"	"Hangchow Municipal Government"	"Local government/administration"				"Past"			99	122		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00091"	"N00048"	"Lynn Chu"	"朱霖"	"Zhu Lin"	"Sino-Italian National Aircraft Works"	"Factory/mine/station"		"Government representative"	1	"Current"			97	120		
+"Engineering"	"River Conservancy"	"Position"	"R00047"	"N00020"	"Shu-t'ien Li"	"李世田"	"Li Shitian"	"National Peiyang Engineering College"	"Education/research"		"Dean"	1	"Current"			94	117		
+"Engineering"	"River Conservancy"	"Position"	"R00046"	"N00020"	"Shu-t'ien Li"	"李世田"	"Li Shitian"	"North River Commission"	"Railway/Infrastructure"		"Executive member"	1	"Current"			94	117		
+"Engineering"	"Electrical Communication"	"Position"	"R00174"	"N00109"	"S. M. Lee"	"李熙謀"	"Li Ximou"	"Chekiang Provincial Telephone Administration"	"Local government/administration"		"Engineer"	2	"Past"			103	126		
+"Engineering"	"Chemical Engineering"	"Position"	"R00061"	"N00031"	"K. T. Lee"	"李祖範"	"Li Zufan"	"China Chemical Works"	" Ltd."	"Private company"		"Engineer"		"Current"			95	118	
+"Engineering"	"Electrical Communication"	"Position"	"R00161"	"N00102"	"Lee Fang-Yi"	"李範一"	"Li Fanyi"	"National Construction Commission"	"Central government/administration"	"Radio administration"	"Assistant director"	2	"Current"			101	124		
+"Engineering"	"Electrical Communication"	"Position"	"R00163"	"N00102"	"Lee Fang-Yi"	"李範一"	"Li Fanyi"	"International Radio Station"	"Factory/mine/station"				"Past"			101	124		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00188"	"N00119"	"John Y. Lee"	"李耀邦"	"Li Yaobang"	"China Scientific Instrument Company"	"Private company"				"Current"			104	127		
+"Engineering"	"Railway Engineering"	"Position"	"R00037"	"N00012"	"Y. Lee"	"李育"	"Li Yu"	"Hunan-Kweichow Railway"	"Railway/Infrastructure"		"Assistant director"	2	"Current"			93	116		
+"Engineering"	"Engineering Research"	"Position"	"R00205"	"N00131"	"Y. W. Lee"	"李郁榮"	"Li Yurong"	"Tsing-Hua University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Railway Engineering"	"Position"	"R00031"	"N00010"	"C. Y. Tu"	"杜鎭遠"	"Du Zhenyuan"	"Chekiang Kiangsi Railway"	"Railway/Infrastructure"		"Director"	1	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00032"	"N00010"	"C. Y. Tu"	"杜鎭遠"	"Du Zhenyuan"	"Chekiang Kiangsi Railway"	"Railway/Infrastructure"		"Chief engineer"	1	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00029"	"N00010"	"C. Y. Tu"	"杜鎭遠"	"Du Zhenyuan"	"Hangchow-Kiangsan Railway"	"Railway/Infrastructure"		"Director"	1	"Past"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00030"	"N00010"	"C. Y. Tu"	"杜鎭遠"	"Du Zhenyuan"	"Hangchow-Kiangsan Railway"	"Railway/Infrastructure"		"Chief engineer"	1	"Past"			93	116		
+"Engineering"	"Engineering Research"	"Position"	"R00214"	"N00140"	"T. M.  Tu"	"杜長明"	"Du Changming"	"National Central University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Architecture"	"Position"	"R00112"	"N00063"	"T. P. Yang"	"楊廷寶"	"Yang Tingbao"	"Kwan"	" Chu and Yang Architects and Engineers"	"Private company"				"Current"			98	121	
+"Engineering"	"Electrical Manufacture"	"Position"	"R00180"	"N00114"	"C. S. Yang"	"楊景時"	"Yang Jingshi"	"Chinese National Electric and Pottery Company"	"Private company"		"Founder"		"Past"			103	126		
+"Engineering"	"Engineering Research"	"Position"	"R00198"	"N00126"	"S. L. Yang"	"楊肇燫"	"Yang Zhaolian"	"Academia Sinica"	"Education/research"	"Institute of physics"	"Researcher"		"Current"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00196"	"N00124"	"C. Yang"	"楊銓"	"Yang Quan"	"Academia Sinica"	"Education/research"		"Founder"		"Past"			105	128		
+"Engineering"	"River Conservancy"	"Position"	"R00043"	"N00017"	"Woodson Wang"	"汪胡植"	"Wang Huzhi"	"Huai River Commission"	"Railway/Infrastructure"		"Chief engineer"	1	"Current"			94	117		
+"Engineering"	"Municipal Works"	"Position"	"R00122"	"N00078"	"S. C. Shen"	"沈叔成"	"Shen Shucheng"	"Hangchow Municipal Government"	"Local government/administration"				"Past"			99	122		
+"Engineering"	"Municipal Works"	"Position"	"R00118"	"N00074"	"Shen Yi"	"沈怡"	"Shen Yi"	"City Government of Greater Shanghai"	"Local government/administration"	"Bureau of Public Works"	"Director"	1	"Current"			99	122		
+"Engineering"	"Engineering Research"	"Position"	"R00211"	"N00137"	"T. H. Shen"	"沈慈暉"	"Shen Cihui"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"River Conservancy"	"Position"	"R00048"	"N00021"	"Bazin Shen"	"沈百先"	"Shen Baixian"	"Kiangsu Provincial Government"	"Local government/administration"		"Construction Commissioner"		"Current"			94	117		
+"Engineering"	"River Conservancy"	"Position"	"R00049"	"N00021"	"Bazin Shen"	"沈百先"	"Shen Baixian"	"Tai-Hu Conservancy Board"	"Railway/Infrastructure"		"Director"	1	"Current"			94	117		
+"Engineering"	"Chemical Engineering"	"Position"	"R00060"	"N00030"	"C. N. Shen"	"沈鎭南"	"Shen Zhennan"	"Kwangsi sugar refinery"	"Factory/mine/station"		"Director"	1	"Current"			95	118		
+"Engineering"	"Electrical Communication"	"Position"	"R00176"	"N00111"	"Pinlu Shen"	"沈魯周"	"Shen Luzhou"	"Chekiang Provincial Telephone Administration"	"Local government/administration"		"Engineer"	2	"Past"			103	126		
+"Engineering"	"Chemical Engineering"	"Position"	"R00062"	"N00032"	"S. Y. Fung"	"洪紹譽"	"Hong Shaoyu"	"China Chemical Works"	" Ltd."	"Private company"		"Manager"	1	"Current"			95	118	
+"Engineering"	"Electrical Communication"	"Position"	"R00167"	"N00106"	"Y. C. Wen"	"温毓慶"	"Wen Yuqing"	"International Radio Station"	"Factory/mine/station"		"Director"	1	"Current"			103	126		
+"Engineering"	"Engineering Research"	"Position"	"R00220"	"N00143"	"Li-Chi Pan"	"潘履潔"	"Pan Lüjie"	"Academia Sinica"	"Education/research"		"Researcher"		"Current"						
+"Engineering"	"Engineering Research"	"Position"	"R00219"	"N00143"	"Li-Chi Pan"	"潘履潔"	"Pan Lüjie"	"Chung-Hua Chemical Research Laboratory"	"Education/research"		"Researcher"		"Past"			105	128		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00143"	"N00090"	"M. H. Pai"	"潘銘新"	"Pan Mingxin"	"National Construction Commission"	"Central government/administration"	"Electricity Division"	"Director"	1	"Past"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00145"	"N00090"	"M. H. Pai"	"潘銘新"	"Pan Mingxin"	"National Construction Commission"	"Central government/administration"	"Capital Electricity Works (Nanking)"	"Director"	1	"Current"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00146"	"N00090"	"M. H. Pai"	"潘銘新"	"Pan Mingxin"	"National Construction Commission"	"Central government/administration"	"Engineering department"	"Chief"	1	"Current"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00144"	"N00090"	"M. H. Pai"	"潘銘新"	"Pan Mingxin"	"Chekiang Electricity Bureau"	"Local government/administration"		"Director"	1	"Past"			101	124		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00085"	"N00044"	"Tsoo Wong"	"王助"	"Wang Zhu"	"Central Aircraft Manufacturing Works"	"Factory/mine/station"		"Government representative"	1	"Current"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00084"	"N00044"	"Tsoo Wong"	"王助"	"Wang Zhu"	"Naval Aircraft Works (Foochow)"	"Factory/mine/station"			2	"Past"			96	119		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00090"	"N00047"	"S. C. Wang"	"王士倬"	"Wang Shizhuo"	"Air Force Technical School"	"Education/research"		"Deputy Commandant"	2	"Current"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00089"	"N00047"	"S. C. Wang"	"王士倬"	"Wang Shizhuo"	"Tsing-Hua University"	"Education/research"	"Wind tunnel"	"Designer"		"Past"			97	120		
+"Engineering"	"Electrical Communication"	"Position"	"R00162"	"N00103"	"C. C. Wang"	"王崇植"	"Wang Chongzhi"	"National Construction Commission"	"Central government/administration"	"Radio administration"	"Chief engineer"	1	"Current"			102	125		
+"Engineering"	"Electrical Communication"	"Position"	"R00164"	"N00103"	"C. C. Wang"	"王崇植"	"Wang Chongzhi"	"International Radio Station"	"Factory/mine/station"				"Past"			102	125		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00088"	"N00046"	"C. F. Wang"	"王承献"	"Wang Chengxian"	"Commission on Aeronautical Affairs"	"Central government/administration"	"Technical Division"	"Chief"		"Current"			97	120		
+"Engineering"	"Textile Engineering"	"Position"	"R00142"	"N00089"	"Y. C. Wang"	"王榮吉"	"Wang Rongji"	"Ching-Yuan Silk Weaving Company"	"Private company"		"Manager"	1	"Current"			101	124		
+"Engineering"	"Textile Engineering"	"Position"	"R00141"	"N00089"	"Y. C. Wang"	"王榮吉"	"Wang Rongji"	"Mutual Textile Company"	"Private company"		"Manager"	1	"Current"			101	124		
+"Engineering"	"Mining Engineering"	"Position"	"R00068"	"N00035"	"C. F. Wang"	"王正频"	"Wang Zhengbin"	"Ministry of Industries"	"Central government/administration"	"Mining division"	"Director"		"Past"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00069"	"N00035"	"C. F. Wang"	"王正频"	"Wang Zhengbin"	"Lu-ho-Kou Coal Mining Company"	"Private company"		"Manager"		"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00067"	"N00035"	"C. F. Wang"	"王正频"	"Wang Zhengbin"	"Sino-Japanese Coal and Mining Company"	"Private company"	"Iron division"	"Chief engineer"		"Past"			95	118		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00195"	"N00123"	"Tsu Y. Lu"	"盧祖詒"	"Lu Zudai"	"National Construction Commission"	"Central government/administration"	"Electrical Machinery"	"Consulting engineer"		"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00194"	"N00123"	"Tsu Y. Lu"	"盧祖詒"	"Lu Zudai"	"Nankai University"	"Education/research"	"Electrical Engineering Department"	"Dean"	1	"Current"			104	127		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00100"	"N00056"	"W. P. Lo"	"盧維溥"	"Lu Weipu"	"Ministry of Industries"	"Central government/administration"	"Central Machine Works"	"Director"	1	"Current"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00099"	"N00056"	"W. P. Lo"	"盧維溥"	"Lu Weipu"	"Curtiss Airplane Company"	"Private company"				"Past"			97	120		
+"Engineering"	"Electrical Communication"	"Position"	"R00175"	"N00110"	"Y. K. Chow"	"秉玉坤"	"Bing Yukun"	"Chekiang Provincial Telephone Administration"	"Local government/administration"		"Engineer"	2	"Past"			103	126		
+"Engineering"	"Mining Engineering"	"Position"	"R00082"	"N00042"	"Chin Yui"	"秦瑜"	"Qin Yu"	"National Construction Commission"	"Central government/administration"	"Technical Department"	"Department Head"	1	"Current"			96	119		
+"Engineering"	"Municipal Works"	"Position"	"R00115"	"N00071"	"T. K. Cheng"	"程天固"	"Cheng Tiangu"	"Canton Municipal Government"	"Local government/administration"				"Past"			99	122		
+"Engineering"	"Railway Engineering"	"Position"	"R00018"	"N00005"	"H. K. Cheng"	"程孝剛"	"Cheng Xiaogang"	"New Railways Construction Commission"	"Central government/administration"	"Mechanical Department"	"Chief"		"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00017"	"N00005"	"H. K. Cheng"	"程孝剛"	"Cheng Xiaogang"	"Chinese Eastern Railway"	"Railway/Infrastructure"		"Mechanical engineer"		"Past"			93	116		
+"Engineering"	"Mining Engineering"	"Position"	"R00078"	"N00038"	"Chen I. Fang"	"程義法"	"Cheng Yifa"	"Ministry of Industries"	"Central government/administration"	"Mining division"	"Director"	1	"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00077"	"N00038"	"Chen I. Fang"	"程義法"	"Cheng Yifa"	"Han-Yeh-Ping Company"	"Private company"	"Ping-Hsiang Colliery"	"Mining engineer"	2	"Past"			95	118		
+"Engineering"	"Railway Engineering"	"Position"	"R00039"	"N00014"	"Y. Lo"	"羅英"	"Luo Ying"	"Chien-Tang Bridge"	"Railway/Infrastructure"				"Current"			93	116		
+"Engineering"	"Mining Engineering"	"Position"	"R00076"	"N00037"	"P. Y. Hu"	"胡僮淵"	"Hu Tongyuan"	"Ministry of Industries"	"Central government/administration"		"Senior technical expert"	1	"Current"			95	118		
+"Engineering"	"Mining Engineering"	"Position"	"R00075"	"N00037"	"P. Y. Hu"	"胡僮淵"	"Hu Tongyuan"	"Lungyen Iron Works"	"Factory/mine/station"		"Metallurgical Engineer"	2	"Past"			95	118		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00189"	"N00120"	"J. T. Hu"	"胡汝鼎"	"Hu Ruding"	"National Construction Commission"	"Central government/administration"	"Electrical manufacturing works"	"Director"		"Current"			104	127		
+"Engineering"	"Electrical Communication"	"Position"	"R00173"	"N00108"	"Z. H. Hu"	"胡瑞祥"	"Hu Ruixiang"	"Ministry of Communications"	"Central government/administration"	"Department of Telegraph and Telephone"	"Chief engineer"	1	"Current"			103	126		
+"Engineering"	"Electrical Communication"	"Position"	"R00171"	"N00108"	"Z. H. Hu"	"胡瑞祥"	"Hu Ruixiang"	"Nanking Telephone Administration"	"Local government/administration"		"Director"	2	"Past"			103	126		
+"Engineering"	"Electrical Communication"	"Position"	"R00172"	"N00108"	"Z. H. Hu"	"胡瑞祥"	"Hu Ruixiang"	"Nanking Telephone Administration"	"Local government/administration"		"Chief engineer"	2	"Past"			103	126		
+"Engineering"	"Electrical Communication"	"Position"	"R00170"	"N00108"	"Z. H. Hu"	"胡瑞祥"	"Hu Ruixiang"	"New Jersey Bell Telephone Company"	"Private company"				"Past"			103	126		
+"Engineering"	"Railway Engineering"	"Position"	"R00038"	"N00013"	"Thomson E. S. Mao"	"茅以昇"	"Mao Yisheng"	"Chien-Tang Bridge"	"Railway/Infrastructure"				"Current"			93	116		
+"Engineering"	"Naval Construction"	"Position"	"R00129"	"N00083"	"Chi-Foo Yeh"	"葉在馥"	"Ye Zaifu"	"Kiangnan Dock and Engineering Works"	"Factory/mine/station"	"Hull Division"	"Engineer"	2	"Current"			100	123		
+"Engineering"	"Railway Engineering"	"Position"	"R00021"	"N00006"	"Chia-Tsun Yeh"	"葉家俊"	"Ye Jiajun"	"New Railways Construction Commission"	"Central government/administration"		"Secretary"		"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00020"	"N00006"	"Chia-Tsun Yeh"	"葉家俊"	"Ye Jiajun"	"Canton-Kowlung Railway"	"Railway/Infrastructure"		"Managing-director"		"Past"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00019"	"N00006"	"Chia-Tsun Yeh"	"葉家俊"	"Ye Jiajun"	"Ping-Han Railway"	"Railway/Infrastructure"		"Engineer"		"Past"			93	116		
+"Engineering"	"Naval Construction"	"Position"	"R00130"	"N00084"	"Yun-Chiao Yeh"	"葉雲樵"	"Ye Yunqiao"	"Kiangnan Dock and Engineering Works"	"Factory/mine/station"	"Naval Shipbuilding Division"	"Inspector"	2	"Current"			100	123		
+"Engineering"	"Engineering Research"	"Position"	"R00208"	"N00134"	"Fang-Yin Tsai"	"蔡方蔭"	"Cai Fangyin"	"Tsing-Hua University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Textile Engineering"	"Position"	"R00133"	"N00086"	"Y. Tsai"	"蔡雄"	"Cai Xiong"	"Mayar Silk Works"	"Private company"		"Manager"	1	"Current"			100	123		
+"Engineering"	"Textile Engineering"	"Position"	"R00134"	"N00086"	"Y. Tsai"	"蔡雄"	"Cai Xiong"	"Mayar Silk Works"	"Private company"		"Engineer"	1	"Current"			100	123		
+"Engineering"	"River Conservancy"	"Position"	"R00050"	"N00022"	"T. P. Hsueh"	"薛卓斌"	"Xue Zhuobin"	"Whangpoo Conservancy Board"	"Railway/Infrastructure"		"Assistant chief engineer"	2	"Current"			94	117		
+"Engineering"	"Municipal Works"	"Position"	"R00119"	"N00075"	"T. S. Sih"	"薛次莘"	"Xue Cishen"	"City Government of Greater Shanghai"	"Local government/administration"	"Bureau of Highway"	"Engineer"	2	"Current"			99	122		
+"Engineering"	"Textile Engineering"	"Position"	"R00139"	"N00088"	"Hsueh Tsu-kang"	"薛祖康"	"Xue Zukang"	"Yung-Tai Silk Filature"	"Private company"		"Assistant manager"	2	"Current"			100	123		
+"Engineering"	"Textile Engineering"	"Position"	"R00140"	"N00088"	"Hsueh Tsu-kang"	"薛祖康"	"Xue Zukang"	"Yung-Tai Silk Filature"	"Private company"		"Engineer"	2	"Current"			100	123		
+"Engineering"	"Engineering Research"	"Position"	"R00204"	"N00130"	"A. P. T. San"	"薩本楝"	"Sa Benlian"	"Ohio State University"	"Education/research"		"Visiting Professor"		"Current"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00203"	"N00130"	"A. P. T. San"	"薩本楝"	"Sa Benlian"	"Tsing-Hua University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Railway Engineering"	"Position"	"R00009"	"N00003"	"F. K. Sah"	"薩福均"	"Sa Fujun"	"Ministry of Railways"	"Central government/administration"	"Engineering Department"	"Director"		"Current"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00010"	"N00003"	"F. K. Sah"	"薩福均"	"Sa Fujun"	"New Railways Construction Commission"	"Central government/administration"	"Engineering Department"	"Chief"		"Current"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00008"	"N00003"	"F. K. Sah"	"薩福均"	"Sa Fujun"	"Ko-Pi Railway (Yunnan)"	"Railway/Infrastructure"		"Chief engineer"		"Past"			92	115		
+"Engineering"	"Municipal Works"	"Position"	"R00120"	"N00076"	"H. C. Chiu"	"裘錫鈞"	"Qiu Xijun"	"City Government of Greater Shanghai"	"Local government/administration"	"Bureau of Public Works"	"Engineer"	2	"Current"			99	122		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00160"	"N00101"	"K. Hsu"	"許坤"	"Xu Kun"	"Peiping Tramway Company"	"Private company"		"Engineer"	2	"Current"			101	124		
+"Engineering"	"Highway Engineering"	"Position"	"R00228"	"N00145"	"Hsu Kuen San"	"許貫三"	"Xu Guansan"	"City Government of Greater Shanghai"	"Local government/administration"	"Bureau of Public Works"	"Chief engineer"		"Past"					"imh-34-461"	
+"Engineering"	"Railway Engineering"	"Position"	"R00004"	"N00001"	"Jeme Tien Yow"	"詹天佑"	"Zhan Tianyou"	"Han-Yueh-Chuan Railway"	"Railway/Infrastructure"		"Director-general"		"Past"		1919	92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00001"	"N00001"	"Jeme Tien Yow"	"詹天佑"	"Zhan Tianyou"	"Peking-Kalgan Railway"	"Railway/Infrastructure"		"Surveyor"		"Past"		1919	91	114		
+"Engineering"	"Railway Engineering"	"Position"	"R00002"	"N00001"	"Jeme Tien Yow"	"詹天佑"	"Zhan Tianyou"	"Peking-Kalgan Railway"	"Railway/Infrastructure"		"Draughtsman"		"Past"		1919	91	114		
+"Engineering"	"Railway Engineering"	"Position"	"R00003"	"N00001"	"Jeme Tien Yow"	"詹天佑"	"Zhan Tianyou"	"Peking-Kalgan Railway"	"Railway/Infrastructure"		"Engineer-in-chief"		"Past"		1919	91	114		
+"Engineering"	"Chemical Engineering"	"Position"	"R00063"	"N00033"	"F. C. Tsu"	"諸鳳章"	"Zhu Fengzhang"	"Ming-Fong Paper Mills"	"Private company"		"Manager"	1	"Current"			95	118		
+"Engineering"	"Chemical Engineering"	"Position"	"R00064"	"N00033"	"F. C. Tsu"	"諸鳳章"	"Zhu Fengzhang"	"Ming-Fong Paper Mills"	"Private company"		"Chief engineer"	1	"Current"			95	118		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00152"	"N00096"	"T. K. Tse"	"謝作楷"	"Xie Zuokai"	"Canton Electrical Power Company"	"Private company"		"Manager"	2	"Past"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00153"	"N00096"	"T. K. Tse"	"謝作楷"	"Xie Zuokai"	"Canton Electrical Power Company"	"Private company"		"Chief engineer"	2	"Past"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00154"	"N00096"	"T. K. Tse"	"謝作楷"	"Xie Zuokai"	"Shanghai Western District Power Company"	"Private company"		"Vice-president"	1	"Current"			101	124		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00155"	"N00096"	"T. K. Tse"	"謝作楷"	"Xie Zuokai"	"Shanghai Western District Power Company"	"Private company"		"General Manager"	1	"Current"			101	124		
+"Engineering"	"Engineering Research"	"Position"	"R00212"	"N00138"	"C. F. Lai"	"賴其芳"	"Lai Qifang"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Electrical Communication"	"Position"	"R00177"	"N00112"	"T. C. Tsao"	"趙曾珏"	"Zhao Cengjue"	"Chekiang Provincial Telephone Administration"	"Local government/administration"		"Director"	1	"Past"	1932		103	126		
+"Engineering"	"Electrical Communication"	"Position"	"R00178"	"N00112"	"T. C. Tsao"	"趙曾珏"	"Zhao Cengjue"	"Chekiang Provincial Telephone Administration"	"Local government/administration"		"Chief engineer"	1	"Past"	1932		103	126		
+"Engineering"	"Architecture"	"Position"	"R00113"	"N00064"	"Shen Chao"	"趙深"	"Zhao Shen"	"United Architects"	" Shanghai"	"Private company"				"Current"			98	121	
+"Engineering"	"Highway Engineering"	"Position"	"R00221"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"Ministry of Railways"	"Central government/administration"		"Student envoy"		"Past"					"imh-74-74"	
+"Engineering"	"Highway Engineering"	"Position"	"R00226"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"National Economic Council"	"Central government/administration"	"Bureau of Roads"	"Vice-director"	1	"Current"	1932	1938			"imh-74-74"	
+"Engineering"	"Highway Engineering"	"Position"	"R00222"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"Nanyang University"	"Education/research"		"Secretary"		"Past"					"imh-74-74"	
+"Engineering"	"Highway Engineering"	"Position"	"R00223"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"Nanyang University"	"Education/research"		"Professor"		"Past"					"imh-74-74"	
+"Engineering"	"Highway Engineering"	"Position"	"R00224"	"N00145"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"6th International Road Congress in Washington"	" D.C."	"Organization"		"Delegate"		"Past"	1930				"imh-74-74"
+"Engineering"	"Highway Engineering"	"Position"	"R00225"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"7th International Road Congress in Munich"	"Organization"		"Delegate"		"Past"	1934				"imh-74-74"	
+"Engineering"	"Highway Engineering"	"Position"	"R00227"	"N00144"	"Tsu-kong Chao"	"趙祖康"	"Zhao Zukang"	"Interprovincial Highway Traffic Commission of Kiangsu"	" Chekiang and Anhwei"	"Railway/Infrastructure"		"Chairman"	1	"Current"					"imh-74-74"
+"Engineering"	"Municipal Works"	"Position"	"R00127"	"N00081"	"Hsin Chee-Sing"	"邢契辛"	"Xing Qixin"	"Tsingtao Municipal Government"	"Local government/administration"	"Public Works Department"	"Director"	1	"Current"			100	123		
+"Engineering"	"Municipal Works"	"Position"	"R00126"	"N00081"	"Hsin Chee-Sing"	"邢契辛"	"Xing Qixin"	"North Eastern Shipbuilding Company"	"Private company"		"Chief Engineer"	1	"Past"			100	123		
+"Engineering"	"Railway Engineering"	"Position"	"R00023"	"N00007"	"E. K. Denn"	"鄧益光"	"Deng Yiguang"	"Chengtu-Chungking Railway"	"Railway/Infrastructure"		"Director"	1	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00024"	"N00007"	"E. K. Denn"	"鄧益光"	"Deng Yiguang"	"Chengtu-Chungking Railway"	"Railway/Infrastructure"		"Chief engineer"	1	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00022"	"N00007"	"E. K. Denn"	"鄧益光"	"Deng Yiguang"	"Kiaochow-Tsinan Railway"	"Railway/Infrastructure"		"Chief engineer"		"Past"			93	116		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00086"	"N00045"	"C. T. Chien"	"錢昌祚"	"Qian Changzuo"	"Commission on Aeronautical Affairs"	"Central government/administration"	"Technical Division"	"Chief"	1	"Past"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00087"	"N00045"	"C. T. Chien"	"錢昌祚"	"Qian Changzuo"	"Air Force Technical School"	"Education/research"		"Commandant"	1	"Current"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00108"	"N00060"	"Z. P. Zien"	"錢祥標"	"Qian Xiangbiao"	"China Wire Products Company"	"Private company"		"Manager"	1	"Current"			98	121		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00109"	"N00060"	"Z. P. Zien"	"錢祥標"	"Qian Xiangbiao"	"China Wire Products Company"	"Private company"		"Chief engineer"	1	"Current"			98	121		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00193"	"N00122"	"S. L. Chung"	"鍾兆琳"	"Zhong Zhaolin"	"National Construction Commission"	"Central government/administration"	"Radio administration"	"Consulting engineer"		"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00192"	"N00122"	"S. L. Chung"	"鍾兆琳"	"Zhong Zhaolin"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			104	127		
+"Engineering"	"Architecture"	"Position"	"R00110"	"N00061"	"S. S. Kwan"	"關頌聲"	"Guan Songsheng"	"Kwan"	" Chu and Yang Architects and Engineers"	"Private company"				"Current"			98	121	
+"Engineering"	"Engineering Research"	"Position"	"R00201"	"N00128"	"C S. Chen"	"陳中熙"	"Chen Zhongxi"	"National Construction Commission"	"Central government/administration"	"Electrical Laboratory"	"Researcher"		"Past"			105	128		
+"Engineering"	"Engineering Research"	"Position"	"R00200"	"N00128"	"C S. Chen"	"陳中熙"	"Chen Zhongxi"	"General Electric Company"	"Private company"				"Past"			105	128		
+"Engineering"	"Mining Engineering"	"Position"	"R00083"	"N00043"	"Chen Ta-Seu"	"陳大受"	"Chen Dashou"	"National Construction Commission"	"Central government/administration"	"Mining department"	"Department Head"	1	"Current"			96	119		
+"Engineering"	"Architecture"	"Position"	"R00114"	"N00065"	"B. Chih Chen"	"陳植"	"Chen Zhi"	"United Architects"	" Shanghai"	"Private company"				"Current"			98	121	
+"Engineering"	"Railway Engineering"	"Position"	"R00026"	"N00008"	"T. Y. Chen"	"陳祖貽"	"Chen Zuyi"	"Chengtu-Chungking Railway"	"Railway/Infrastructure"		"Assistant director"	2	"Current"			93	116		
+"Engineering"	"Railway Engineering"	"Position"	"R00025"	"N00008"	"T. Y. Chen"	"陳祖貽"	"Chen Zuyi"	"Tientsin-Pukow Railway"	"Railway/Infrastructure"	"Han-Pu section"	"Chief engineer"		"Past"			93	116		
+"Engineering"	"Engineering Research"	"Position"	"R00199"	"N00127"	"M. K. Chen"	"陳茂康"	"Chen Maokang"	"Academia Sinica"	"Education/research"	"Institute of physics"	"Researcher"		"Current"			105	128		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00185"	"N00117"	"F. L. Chen"	"陳輔良"	"Chen Fuliang"	"Asiatic Manufacturing Company"	"Private company"		"Chief Engineer"	1	"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00186"	"N00117"	"F. L. Chen"	"陳輔良"	"Chen Fuliang"	"Eastern Neon Light Company"	"Private company"		"Chief Engineer"	1	"Current"			104	127		
+"Engineering"	"Electrical Manufacture"	"Position"	"R00184"	"N00117"	"F. L. Chen"	"陳輔良"	"Chen Fuliang"	"Westinghouse Electric Mfg. Company"	"Private company"	"Graduate School"	"Student engineer"	3	"Past"			104	127		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00158"	"N00099"	"Fountain C. Chen"	"陳長源"	"Chen Changyuan"	"Hangchow Electricity Works"	"Local government/administration"		"Chief engineer"	1	"Current"			101	124		
+"Engineering"	"Electrical Communication"	"Position"	"R00169"	"N00107"	"F. S. Tao"	"陶鳳山"	"Tao Fengshan"	"Ministry of Communications"	"Central government/administration"	"Department of Telegraph and Telephone"	"Section head"	2	"Current"			103	126		
+"Engineering"	"Electrical Communication"	"Position"	"R00168"	"N00107"	"F. S. Tao"	"陶鳳山"	"Tao Fengshan"	"Western Electric Company"	"Private company"		"Student engineer"	3	"Past"			103	126		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00149"	"N00093"	"F. T. Loh"	"陸法會"	"Lu Fahui"	"National Construction Commission"	"Central government/administration"	"Capital Electricity Works (Nanking)"	"Chief engineer"	2	"Current"			101	124		
+"Engineering"	"Electrical Communication"	"Position"	"R00165"	"N00104"	"E. F. Wei"	"韋以黻"	"Wei Yifu"	"Ministry of Communications"	"Central government/administration"		"Chief technical expert"	1	"Current"			102	125		
+"Engineering"	"River Conservancy"	"Position"	"R00044"	"N00018"	"K. Shu"	"須愷"	"Xu Kai"	"Huai River Commission"	"Railway/Infrastructure"		"Assistant chief engineer"	2	"Current"			94	117		
+"Engineering"	"Electrical Communication"	"Position"	"R00166"	"N00105"	"K. L. Yuen"	"顏任光"	"Yan Renguang"	"Ministry of Communications"	"Central government/administration"	"Department of Telegraph and Telephone"	"Director-general"	1	"Current"			103	126		
+"Engineering"	"Railway Engineering"	"Position"	"R00007"	"N00002"	"T. C. Yen"	"顏德慶"	"Yan Deqing"	"Ministry of Railways"	"Central government/administration"		"Managing-director"		"Current"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00006"	"N00002"	"T. C. Yen"	"顏德慶"	"Yan Deqing"	"Cheng-Tai Railway"	"Railway/Infrastructure"		"Chief technical expert"		"Current"			92	115		
+"Engineering"	"Railway Engineering"	"Position"	"R00005"	"N00002"	"T. C. Yen"	"顏德慶"	"Yan Deqing"	"Peking-Kalgan Railway"	"Railway/Infrastructure"		"Engineer"		"Past"			92	115		
+"Engineering"	"Engineering Research"	"Position"	"R00202"	"N00129"	"Y. H. Ku"	"顧毓琇"	"Gu Yuxiu"	"Tsing-Hua University"	"Education/research"	"Engineering College"	"Director"		"Current"			105	128		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00102"	"N00057"	"Yu-Tsuan Ku"	"顧毓瑔"	"Gu Yuquan"	"Ministry of Industries"	"Central government/administration"	"National Bureau of Industrial Research"	"Senior technical expert"	1	"Current"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00103"	"N00057"	"Yu-Tsuan Ku"	"顧毓瑔"	"Gu Yuquan"	"Ministry of Industries"	"Central government/administration"	"National Bureau of Industrial Research"	"Director"	1	"Current"			97	120		
+"Engineering"	"Mechanical Engineering"	"Position"	"R00101"	"N00057"	"Yu-Tsuan Ku"	"顧毓瑔"	"Gu Yuquan"	"National Central University"	"Education/research"		"Professor"		"Current"			97	120		
+"Engineering"	"Naval Construction"	"Position"	"R00128"	"N00082"	"Palliam T. Mar"	"馬德驥"	"Ma Deji"	"Kiangnan Dock and Engineering Works"	"Factory/mine/station"		"Director"	1	"Current"			100	123		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00159"	"N00100"	"K. P. Pao"	"鮑國寶"	"Bao Guobao"	"Foochow Electric Company"	"Private company"		"Chief engineer"	1	"Current"			101	124		
+"Engineering"	"Engineering Research"	"Position"	"R00213"	"N00139"	"S. P. Huang"	"黄叔培"	"Huang Shupei"	"Chiao-Tung University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Electrical Power Engineering"	"Position"	"R00156"	"N00097"	"S. Y. Lung"	"龍純如"	"Long Chunru"	"Wuchow Electricity Works"	"Local government/administration"		"Director"	1	"Current"			101	124		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00097"	"N00054"	"C. J. Chu"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00092"	"N00049"	"C. Y. Liu"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Highway Engineering"	"Position"	"R00236"	"N00153"	"Chang Hsia-yo"	"NA"	"NA"	"National Good Roads Association of China"	"Organization"	"4th International Good Roads Conference"	"Delegate"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00241"	"N00157"	"Chow Un-yin"	"NA"	"NA"	"National Good Roads Association of China"	"Organization"		"Director"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00242"	"N00157"	"Chow Un-yin"	"NA"	"NA"	"World Auto Transportation Conference"	"Organization"		"Delegate"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00234"	"N00151"	"Din-Sen Doon"	"NA"	"NA"	"Kiangsu Provincial Government"	"Local government/administration"	"Public Works Department"	"Director"	1	"Past"						
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00098"	"N00055"	"F. H. Hua"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Highway Engineering"	"Position"	"R00239"	"N00156"	"Hsu Chen-ping"	"NA"	"NA"	"National Good Roads Association of China"	"Organization"		"Director"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00240"	"N00156"	"Hsu Chen-ping"	"NA"	"NA"	"Pan Pacific Association"	"Organization"		"Delegate"		"Past"						
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00096"	"N00053"	"Johnston Tseng"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00094"	"N00051"	"M. T. Lee"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Engineering Research"	"Position"	"R00206"	"N00132"	"N. Wiener"	"NA"	"NA"	"Tsing-Hua University"	"Education/research"		"Professor"		"Current"			105	128		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00095"	"N00052"	"P. L. Li"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Aeronautical Engineering"	"Position"	"R00093"	"N00050"	"P. N. Tien"	"NA"	"NA"	"National Government Air Service"	"Central government/administration"		"Government senior engineer"		"Current"			97	120		
+"Engineering"	"Highway Engineering"	"Position"	"R00237"	"N00154"	"Pan Shao-chien"	"NA"	"NA"	"National Good Roads Association of China"	"Organization"	"5th International Good Roads Conference"	"Delegate"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00235"	"N00152"	"Pao-Hwa Reo"	"NA"	"NA"	"Shensi Provincial Government"	"Local government/administration"	"Public Works Department"	"Director"	1	"Current"						
+"Engineering"	"Highway Engineering"	"Position"	"R00231"	"N00148"	"Pei-Sien Sun"	"NA"	"NA"	"Kiangsu Provincial Government"	"Local government/administration"	"Public Works Department"	"Director"	1	"Current"						
+"Engineering"	"Highway Engineering"	"Position"	"R00229"	"N00146"	"Su-Sun Weng"	"NA"	"NA"	"Canton Municipal Government"	"Local government/administration"	"Bureau of Public Works"	"Director"	1	"Current"						
+"Engineering"	"Highway Engineering"	"Position"	"R00238"	"N00155"	"Sun Mao"	"NA"	"NA"	"National Good Roads Association of China"	"Organization"	"6th International Good Roads Conference"	"Delegate"		"Past"						
+"Engineering"	"Highway Engineering"	"Position"	"R00230"	"N00147"	"Te-Chen Cheng"	"NA"	"NA"	"Fukien Provincial Government"	"Local government/administration"	"Finance Department"	"Director"	1	"Current"						
+"Engineering"	"Highway Engineering"	"Position"	"R00233"	"N00150"	"Te-Kong Hsu"	"NA"	"NA"	"Kiangsu Provincial Government"	"Local government/administration"	"Public Works Department"	"Secretary"	2	"Current"						
+"Engineering"	"Highway Engineering"	"Position"	"R00232"	"N00149"	"Yang-Pu Tseng"	"NA"	"NA"	"Canton Municipal Government"	"Local government/administration"		"Mayor"	1	"Current"						

@@ -1,0 +1,661 @@
+---
+title: "American University Men in China (1936)"
+subtitle: "Correspondence analysis and clustering"
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This essay relies on correspondence analysis and other clustering techniques to group the American University Men of China based on shared educational or employment patterns. 
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    theme: readable # all theme -> https://bootswatch.com/3/
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(FactoMineR)
+library(Factoshiny)
+library(Factoshiny)
+library(explor)
+library(cluster)  
+library(ape)
+library(seriation)
+library(NbClust)
+library(pvclust)
+library(knitr)
+library(kableExtra)
+library(DT)
+```
+
+# Prologue
+
+In this tutorial, we perform a series of four correspondence analysis / clustering on four relevant pairs of variables, to examine four sets of interrelated questions, to test four main hypotheses: 
+
+  1.1. Matching between education and employment (field of study / sector level 1)
+  1.2. Matching between education and employment (field of study / sector level 2)
+  2.1. Academic specialization and level of qualification (field of study, main / academic degree)
+  2.2. Academic specialization and level of qualification (subfield of study / academic degree)
+  3.1. Level of qualification and employment (degree level / sector level 1)
+  3.2. Level of qualification and employment (degree level / sector level 2)
+  4.1. University specialization (university / field of study, main)
+  4.2. University specialization (university / subfield of study)
+  
+
+First we load the data: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(readr)
+auc <- read_delim("Data/auc.csv", ";", escape_double = FALSE,
+trim_ws = TRUE)
+
+datatable(auc)
+
+```
+
+For matching employment and education, we focus on the last degree obtained: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(readr)
+highest_uniq <- read_delim("Data/highest_uniq.csv",
+";", escape_double = FALSE, trim_ws = TRUE)
+
+datatable(highest_uniq)
+
+```
+
+<br>
+For more details about how we proceed for selecting the highest degrees, please see this document. 
+
+# Preprocessing 
+
+We prepare the data so as to make it suitable for correspondence analysis (CA). The preprocessing for (CA) consists in three steps 
+
+  1. Create a contingency table using dplyr::tally and tidyr::spread
+  2. Replace NA with 0
+  3. Read first column as row names
+
+For visualizing clusters as heatmaps, we create a matrix from the contingency table using the function as.matrix()
+For hierarchincal clustering, we create a distance matrix using various packages for clustering. We try different similarity measure and linkage method. 
+
+# 1. Matching Education / Employment (Sector 1)
+
+## Preprocessing 
+
+We create a contingency table grouping field of study and sector 1. In a first step, we focus on Chinese members: 
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+matching_1_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>% 
+  group_by(Field_main, Sector_1) %>% 
+  drop_na(Field_main) %>%
+  drop_na(Sector_1) %>% 
+  tally() %>% 
+  spread(key = Field_main, value = n) 
+
+# replace NA with 0
+matching_1_zh <- mutate_all(matching_1_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+matching_1_zh_tbl <- column_to_rownames(matching_1_zh, var = "Sector_1") 
+
+matching_1_zh_tbl
+
+kable(head(matching_1_zh_tbl), caption = "Contingency table: Field of training / Sector of employment (1)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+<br> 
+
+## Exploration 
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca1 <- CA(matching_1_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca1)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = NULL, xlim = c(-2.47,
+        4.31), ylim = c(-1.8, 4.98))
+```
+
+<br> 
+Blue dots represent the field of study. Red dots represent the employer (main sector of employment). Altogether the two dimensions capture more than 56% of information (45% on the first axis, 31.7% on the second), which is pretty good.
+
+## Interpretation 
+
+The *y* axis clearly isolates medical graduates employed in health institutions on the right, with other occupations and fields of study on the left. Organizations lay in between, which means that they could recruit among various fields of study, though more likely in the humanities, as this category appears closer to organizations than other disciplines on the plot. 
+
+The *x* axis separates two groups of employers: universities/education above and central government and company below, with the local government in between. 
+Graduates in engineering and law were more likely to find employment in **educational** institutions. The former supports previous surveys. Wang, for instance, estimated that 28% of American-trained engineers engaged in teaching upon their return, although he noticed that 30% were employed in the private sector and 17% worked for the government (Wang, 1966, 170-1). He also noticed, however, that the proportion of unemployed and of those employed by foreigners was higher among the engineers than among any other group. Contemporary observers generally concurred and attributed their presumably difficult readjustment to the fact that unlike medical and other professionals, the engineers depended on industrial and construction activities that suffered from the shortage of financial resources and the general political instability during the Republic  (Wang, 1966, 170-1, Lee, 1936, 90-106, Pott, 1936, p.8-10). The proximity between law graduates and teaching is less expected. It suggests that few lawyers chose to, or had the opportunity to set their own practice. Most of them preferred or had to teach their specialty in Chinese colleges to earn a living, thereby contributing to establish law as an academic discipline in China. Further research is needed to contextualize these teaching positions within the individuals' entire career in order to establish whether, in each case, teaching was a genuine vocation or a temporary position and stepping stone towards higher responsibilities. 
+As for the **local government**, the field of study remains unknown in most cases. Such undetermined cases referred to PhD with no further specification in the source. This indicates the extent to which municipal or provincial governments were able to recruit highly qualified graduates in their respective field.   
+**Science** graduates equally pursued their career in the central government or in the private sector. Private companies also recruited some graduates in business and commerce. 
+Architecture and the humanities held an outlying position on the biplot. The former was closer to private companies, the latter to organizations.  
+One might be struck by the absence of independent practitioners in law, medicine and architecture. We expect them to be closer to the "company" category. This anomaly reflects partial or missing information in the original source. In fact, the field indicating the employer was left blank in the cases of independent professionals. 
+
+In conclusion, except for engineers and lawyers (who mostly engaged in teaching), their occupations usually matched the graduates' academic training. This was especially true for medical professionals, who all served in health institutions, and students in business & commerce, who mainly worked in the private sector. Sciences graduates were presented with a wider range of professional opportunities. They had the choice between serving the central government or working in the private sector. The central government clearly emphasized scientific training in its recruiting policy. Local governments heavily relied on highly qualified returned students, which supports previous studies devoted to the staff of municipal governments (see for instance, Henriot 1991 for Shanghai and Cody, 1996 for Guangzhou and Nanjing). The correspondence analysis linking the degree level and the sector of employment will help clarify this connection. How local institutions were able to attract highly qualified American graduates remains an intriguing point that calls for further research.  
+
+
+# 2. Matching Education / Employment (Sector 2)
+
+## Preprocessing 
+
+As in the previous analysis, we create a contingency table grouping field of study and sector 2. We also focus on Chinese members: 
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+matching_2_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>% 
+  group_by(Field_main, Sector_2) %>% 
+  drop_na(Field_main) %>%
+  drop_na(Sector_2) %>% 
+  tally() %>% 
+  spread(key = Field_main, value = n) 
+
+# replace NA with 0
+matching_2_zh <- mutate_all(matching_2_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+matching_2_zh_tbl <- column_to_rownames(matching_2_zh, var = "Sector_2") 
+
+matching_2_zh_tbl
+
+kable(head(matching_2_zh_tbl), caption = "Contingency table: Field of training / Sector of employment (2)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+<br> 
+
+## Exploration 
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca2 <- CA(matching_2_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca2)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = NULL, xlim = c(-2.47,
+        4.31), ylim = c(-1.8, 4.98))
+```
+
+<br> 
+Blue dots still represent the field of study and red dots represent the sector of employment, based on the second-level classification. Altogether the two dimensions capture more than 46% of information (almost 26% on the first axis, 21.5% on the second). It is lower than on the previous biplot, which means that the datapoints are less evenly distributed. This was expected since we have a larger number of variables (sectors). Yet this remains a satisfactory result.
+
+## Interpretation 
+
+We still see a division between medicine and hospitals on the right and other sectors on the left, and international organizations in between. 
+The *x* axis now separates sciences and engineering below from other fields above (business, humanities, architecture). Law graduates were close to the center of the plot, which means they engaged in a variety of occupations. Graduates in engineering remains close to educational institutions, but were also offered a wider range of opportunities, by decreasing order, in the private sector (company), public works, communications and miscellaneous industries (textile, engineering, transportation). In other word, the refined classification shows a better matching between their field of expertise and their job outlets. Science graduates presented a similar profile. It appears that the positions they held in the central government, which we observed in the previous plot, referred more precisely to the fields of transportation and communication.   
+
+Law graduates were more likely to work in the insurance or banking business. Business graduates were more closely associated to the press and publishing industry, but were also presented with a wider spectrum of occupations, ranging from trade, ministries, tobacco and metallurgy industries. Graduates in the humanities displayed an eclectic profile. They were employed in a variety of industrial sectors (chemical, mechanical, electrical) and in religious institutions (Y.M.C.A.). Architects were equally employed in building/real estate or in the local government. 
+
+To conclude, except for the humanities, the gap between training and employment was not as dramatic as contemporary observers and later studies have commonly assumed, at least from the perspective of our sample population of AUM. The humanities, moreover, remained a vague umbrella category that did not predetermine to any particular job. 
+
+# 3. Field and degree (1)
+
+How did the level of qualification relate to the field of study? Did some disciplines require or lead to higher academic degrees? 
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+level_field_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  group_by(Degree_level, Field_main) %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Field_main) %>% 
+  tally() %>% 
+  spread(key = Degree_level, value = n)
+
+# replace NA with 0
+level_field_zh <- mutate_all(level_field_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+level_field_zh_tbl <- column_to_rownames(level_field_zh, var = "Field_main") 
+
+level_field_zh_tbl
+
+kable(head(level_field_zh_tbl), caption = "Contingency table: Field / degree (1)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+<br>
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca3 <- CA(level_field_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca3)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto")
+
+```
+
+<br> 
+Blue dots represent the degree and red dots represent the field of study. Altogether the two dimensions capture 90% of information (64% on the first axis, 26% on the second), which is very high. This was expected, however, since this analysis relies on comparatively few variables and categories.
+
+## Interpretation 
+
+The biplot clearly separates higher degrees (doctorates) in professional fields (medicine, law) on the right and lower degrees in other fields on the left. Medical and law students earned the majority of doctorates. The *x* axis further separates "practical" training above (engineering, business) and more general studies (sciences, humanities), below. The latter was strongly associated with bachelor's degrees. The former was associated to higher or more specialized levels of qualification (master, certificate). Certificate was specific to engineering programs. Most business students earned a master's degree. Sciences graduates were equally divided between bachelor's and master's degrees. 
+
+# 4. Field and degree (2)
+
+How did the level of qualification relate to the field of study more specifically? Did some disciplines require or lead to higher academic degrees? 
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+level_field2_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  group_by(Degree_level, Field_2) %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Field_2) %>% 
+  tally() %>% 
+  spread(key = Degree_level, value = n)
+
+# replace NA with 0
+level_field2_zh <- mutate_all(level_field2_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+level_field2_zh_tbl <- column_to_rownames(level_field2_zh, var = "Field_2") 
+
+level_field2_zh_tbl
+
+kable(head(level_field2_zh_tbl), caption = "Contingency table: Field / degree (2)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+<br>
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca4 <- CA(level_field2_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca4)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-3.56,
+        4.46), ylim = c(-1.88, 6.14))
+
+```
+
+<br> 
+Blue dots represent the degree and red dots represent the field of study (sublevel). Altogether the two dimensions capture almost 80% of information (49% on the first axis, 30% on the second), which is lower than on the previous plot, but still remarkably fair given the higher number of variables and categories.
+
+## Interpretation 
+
+The biplot still separates higher degrees and professional fields on the right, and lower degrees in other fields on the left. But we are forced to refine our previous analysis. Doctorates are still closely associated with law and medical specializations such as dental surgery or tropical medicine, but we also find some students in medical sciences who just earned a master's degree. Certificate appeared specific to general engineering. Master's degrees still referred to business students but also included more specialized branches in engineering (civil, mechanical, electrical) or agricultural sciences (forestry). Business students, however, were now split between two groups: those who specialized in business administration usually obtained a master's degree, whereas those who studied commercial sciences earned just a bachelor's degree. Students in general sciences remained equally distant from master's and bachelors degrees. The remaining bachelors applied to a variety of subfields, mostly in the liberal arts (philosophy, arts, literature) but also in agricultural science. To conclude, this more-finely grained analysis prevents us from too hastily generalizing on the correspondence between academic degrees and disciplines. While it remains true that professional fields generally required higher levels of qualification, it also reveals that each field of study may in fact refer to a variety of situations.    
+
+# 5. Level of qualification
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+level_1_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  group_by(Degree_level, Sector_1) %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Sector_1) %>% 
+  tally() %>% 
+  spread(key = Degree_level, value = n)
+
+# replace NA with 0
+level_1_zh <- mutate_all(level_1_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+level_1_zh_tbl <- column_to_rownames(level_1_zh, var = "Sector_1") 
+
+level_1_zh_tbl
+
+kable(head(level_1_zh_tbl), caption = "Contingency table: Degree level / Sector of employment (1)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca5 <- CA(level_1_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca5)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto")
+
+```
+
+<br> 
+Blue dots represent the level of degree and red dots represent the main sector of employment. Altogether the two dimensions capture 96% of information (83% on the first axis, 13% on the second), which is very high. This was expected, however, since this analysis relies on comparatively few variables and categories.
+
+## Interpretation 
+
+The biplot again isolates health institution on the right from other sectors on the left. The *y* axis separates higher and more specialized degrees on the right (doctorates) from lower, less specialized degrees (masters, bachelors) on the left side of the plot. In fact, we can see a gradient from the highest (doctorate) to the lowest degrees (bachelor) as we move along the *x* axis. Certificates at the top of the plot are separated from other degrees.
+Universities and health institutions recruited among the highest graduates (doctorates). The central government contented with bachelors. The private sector recruited massively among master's, and to a lesser extent, bachelor's graduates. The former were also employed in central and local government institutions. 
+
+To conclude, lower degrees holders found opportunities in the private sector or served in the government, whereas educational and health institutions required higher levels of qualification.    
+
+
+# 6. Level of qualification (2)
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+level_2_zh <-
+  highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  group_by(Degree_level, Sector_2) %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Sector_2) %>% 
+  tally() %>% 
+  spread(key = Degree_level, value = n)
+
+# replace NA with 0
+level_2_zh <- mutate_all(level_2_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+level_2_zh_tbl <- column_to_rownames(level_2_zh, var = "Sector_2") 
+
+level_2_zh_tbl
+
+kable(head(level_2_zh_tbl), caption = "Contingency table: Degree level / Sector of employment (2) (first six rows)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca6 <- CA(level_2_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca6)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-1.18,
+        2.46), ylim = c(-1.73, 1.91))
+
+```
+
+<br> 
+Blue dots still represent the level of degree and red dots represent the sector of employment (second-level). Altogether the two dimensions capture almost 90% of information (55% on the first axis, 33% on the second), which remains satisfactory given the greater diversity of sectors.  
+
+## Interpretation 
+
+The biplot clearly separate non-profit sectors on the right (health, research, education, legislative) from the private sector and government administration on the left. The former recruited among the highest graduates (doctors), whereas the latter relied on a wider spectrum of qualifications. The *x* axis further dissociates master's (below) from bachelor's degree (above), with certificates in between. Masters' graduates led to a variety of occupations, including administration, banking, foreign service, communication or public works. Bachelors served in ministries and in industrial sectors that remained underdeveloped among Chinese entrepreneurs during the Republic (automobile, food, real estate). Certificates applied more specifically to engineering. 
+
+# 7. University specialization (Chinese)
+
+Did some universities offered specific programs that others did not propose? Do we observe a specialization among American universities? How far did it account for Chinese and foreign students' educational choices? 
+
+For this investigation, we select only the university that delivered at least two degrees in two distinct fields (31 institutions): 
+
+```{r warning=FALSE, message=FALSE}
+
+top_university <- auc %>% 
+  distinct(University, Field_main) %>% 
+  group_by(University) %>% 
+  count(sort = TRUE) %>% 
+  filter(n>2)
+  
+
+datatable(top_university)
+
+```
+
+We focus on Chinese students first, which we will then compare with their foreign fellows.   
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+univ_field_zh <-
+  auc %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(University %in% top_university$University) %>%
+  group_by(Field_main, University) %>% 
+  drop_na(University) %>%
+  drop_na(Field_main) %>% 
+  tally() %>% 
+  spread(key = Field_main, value = n)
+
+# replace NA with 0
+univ_field_zh <- mutate_all(univ_field_zh, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+univ_field_zh_tbl <- column_to_rownames(univ_field_zh, var = "University") 
+
+univ_field_zh_tbl
+
+kable(head(univ_field_zh_tbl), caption = "Contingency table: University/Academic program (Chinese) (first six rows)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca7 <- CA(univ_field_zh_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca7)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-2.01,
+        3.38), ylim = c(-2, 3.39))
+
+```
+
+<br> 
+Blue dots represent the field of study and red dots represent the universities. The two dimensions capture almost 47% of information (27 on the first axis and 19% on the second). This is lower than on the previous plots, but still respectable. Given the relatively large number of universities, we expected our data to be more scattered than in previous analyses. 
+
+## Interpretation 
+
+The biplot separates the universities that offered courses in the liberal arts (humanities, law, education) above the *x* axis and those that emphasized science and technology below. The *y* axis further opposes professional courses on the right (business, medicine, architecture) and more general programs on the left. The universities in between offered a more diversified range of courses than the outlying institutions that specialized in the field to which they were closer on the plot. For instance, the plot shows a clear specialization in engineering at Purdue University (bottom left hand corner). On the opposite (top left), Princeton, Chicago and Vanderbilt tended to specialize in law. There was no clear geographical pattern in academic specialization. For instance, business students could enroll in New York University on the East coast or in Southern California on the Pacific Coast. Mapping the universities will illuminate the geographies of education.  
+
+Did the foreign students attended the same courses in the same universities?  
+
+# 8. University specialization (foreign)
+
+## Preprocessing
+
+```{r warning=FALSE, message=FALSE}
+
+# create contingency table
+univ_field_foreign <-
+  auc %>% 
+  filter(Nationality != "Chinese") %>%
+  filter(University %in% top_university$University) %>%
+  group_by(Field_main, University) %>% 
+  drop_na(University) %>%
+  drop_na(Field_main) %>% 
+  tally() %>% 
+  spread(key = Field_main, value = n)
+
+# replace NA with 0
+univ_field_foreign <- mutate_all(univ_field_foreign, ~replace(., is.na(.), 0))
+
+# read first column as row names 
+univ_field_foreign_tbl <- column_to_rownames(univ_field_foreign, var = "University") 
+
+univ_field_foreign_tbl
+
+kable(head(univ_field_foreign_tbl), caption = "Contingency table: University/Academic program (non-Chinese) (first six rows)") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+## Exploration
+
+We can now apply correspondence analysis using FactoMinR: 
+
+```{r warning=FALSE, message=FALSE}
+library(FactoMineR)
+res.ca8 <- CA(univ_field_foreign_tbl)
+
+```
+<br>
+We use the library *explor* to interact with the biplot: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(explor)
+res <- explor::prepare_results(res.ca8)
+explor::CA_var_plot(res, xax = 1, yax = 2, lev_sup = FALSE, var_sup = FALSE,
+    var_sup_choice = , var_hide = "None", var_lab_min_contrib = 0, col_var = "Position",
+    symbol_var = NULL, size_var = NULL, size_range = c(10, 300), labels_size = 10,
+    point_size = 56, transitions = TRUE, labels_positions = "auto", xlim = c(-3.65,
+        5.12), ylim = c(-2.58, 6.2))
+
+```
+
+<br> 
+Blue dots still represent the field of study and red dots represent the universities. The two dimensions capture more than 43% of information (23.5% on the first axis and 20% on the second), which is lower than on the previous plots, but still respectable. Given the relatively large number of universities, we expected our data to be more scattered than in previous analyses. 
+
+## Interpretation 
+
+We also observe a division between liberal arts (law, theology) on the right and scientific or practical fields on the left, with the humanities at the center. Yet the distinction is less striking than for Chinese students. Despite some differences in the fields of study and the universities attended by two national groups, we generally observe the same associations between the universities and their academic programs. Chicago, for instance, is closely associated with law, New York University with business, and Purdue with engineering. This suggests that Chinese and foreign students who specialized in the same fields generally enrolled in the same courses and attended the same institutions. Closer examination may reveal patterns of differentiation, but they are likely to be marginal in our population. As a result, we expect foreign and Chinese students to mingle together on the same campuses. Factors other than the national origin (period of study, degree level) may account for variation in course enrollment. 
+
+# Further directions
+
+Limitations: for this study, we simply relied on individuals' position at the time the directory was published. We reduced individuals' professional career to a single position, a single point in time. We need to reconstruct their entire professional trajectory to complicate the relation between employment and academic specialization. 
+
+# Alternative visualization
+
+## Clustering
+## Heatmap
+
+# References 
+
+American University Club of Shanghai. *American University Men in China*. Shanghai: Comacrib Press, 1936.
+
+Cody, Jeffrey W. “American Planning in Republican China, 1911-1937.” *Planning Perspectives* 11, no. 4 (December 1, 1996): 339–77. 
+
+Henriot, Christian. *Shanghai, 1927-1937: élites locales et modernisation dans la Chine nationaliste.* Paris: Editions de l’Ecole des hautes études en sciences sociales, 1991.
+
+Lee, S.M. “Engineering and Architecture.” In *American University Men in China*, 90–106. Shanghai: Comacrib Press, 1936.
+
+Pott, F.L. Hawks. “Education of Chinese in the U.S.A.” In *American University Men in China*, 1–18. Shanghai: Comacrib Press, 1936.
+
+Ryan Deschamps, "Correspondence Analysis for Historical Research with R," *The Programming Historian* 6 (2017), https://doi.org/10.46430/phen0062. 
+
+Schweinberger, Martin. 2021. "Cluster and Correspondence Analysis in R." Brisbane: The University of Queensland. url: https://slcladal.github.io/clust.html (Version 2021.04.10). 
+
+Wang, Y.C. *Chinese Intellectuals and the West, 1872-1949*. Chapel Hill, University of North Carolina Press, 1966.
+
+https://www.r-graph-gallery.com/heatmap 
+
+https://www.datanovia.com/en/lessons/heatmap-in-r-static-and-interactive-visualization/ 
+
+

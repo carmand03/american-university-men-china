@@ -1,0 +1,778 @@
+---
+title: "A place-based study of alumni networks in modern China"
+subtitle: "Based on the directory of American University Men in Shanghai (1936)" 
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This tutorial series applies a place-based methodology to study Sino-American alumni networks in modern China, based on a directory of the American University Club of Shanghai published in 1936. In this first instalment, we show how to find and analyze places in two-mode relational data using the R package "Places" (Delio Lucena).    
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Places)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# Research context 
+
+This research originates in a directory of the American University Club (AUC) of Shanghai published in 1936^[American University Club of Shanghai. American University Men in China. Shanghai: Comacrib Press, 1936. We are most grateful to Dr. Jiang Jie (Shanghai Normal University) who kindly provided us with a digital copy of the directory.]. The AUC was one of the earliest and most important organizations of American college alumni in pre-1949 China. It was established around 1902 by American expatriates in Shanghai. Membership was initially restricted to foreigners, but the club began to admit Chinese in 1908. Thereafter, Chinese members steadily increased and became the majority in the early 1930s (rising from 97 (out of 196) in 1930 to 207 (out of 383 in 1933) and 204 (out of 396) in 1935. The main goal of the club was to provide former graduates of American universities with a common meeting ground in China. It held an annual dinner, monthly tiffins, garden parties, barbecues, dinner dances and many other social gatherings. The club granted scholarships to prospective students in the United States and organized conferences to disseminate useful information about study abroad and other issues related to education.
+
+The directory provides the list of members with their academic curricula (degree, college and year of graduation) (Fig.1). The complete dataset can be downloaded on [Zenodo](https://zenodo.org/record/6370085#.YjXnyJrMKkg). 
+
+![Figure 1 - Cover and sample page of *American University Men in China* (1936)](Images/SourceExtract.png)  
+
+Our assumption is that we can process this list in a systematic way in order to reconstruct alumni networks within this population. The first step consists in reconstructing the individuals’ academic trajectories and identifying the individuals who attended their same colleges. The underlying hypothesis is that having attended the same college
+
+  * either created a potential for future collaboration later in their career (maximal hypothesis) 
+  * or at the very least, created a shared cultural background and experience, which eventually contributed to building a common identity for international alumni and returned students as a new social group in post imperial China (minimal hypothesis) 
+
+The main challenge is that, more than often, individuals had attended more than one college (2 on average, with a maximum of 6). I argue that a place-based approach is a suitable solution to address this challenge. 
+
+# What are places? 
+
+The concept of *place* should not be understood in the geographical sense. First conceptualized by sociologist N. Pizarro (2000, 2002, 2007), it is more akin to the notion of "structural equivalence" developed in network analysis^[Pizarro, Narciso. “Structural Identity and Equivalence of Individuals in Social Networks.” *International Sociology* 22, no. 6 (2007): 767–92 ; “Appartenances, places et réseaux de places. La reproduction des processus sociaux et la génération d’un espace homogène pour la définition des structures sociales.” *Sociologie et sociétés* 31, no. 1 (2002): 143–61; “Regularidad Relacional, Redes de Lugares y Reproduccion Social.” *Politica y Sociedad* 33 (2000)]. To put it simply, two (or more) individuals belong to the same place if they are related to exactly the same institutions. In our example, two students belong to the same place if they attended exactly the same college(s). 
+
+We can rely on places when the following conditions are met:
+
+  * Our data consists of two-mode relational data (club membership, interlocking boards, participation in events, etc.). 
+  * It involves multiple membership: Individuals often belong to/are related to more than one institution. 
+  * The range of membership per individual should not be too wide. 
+  * The distribution of members across institutions should not be too skewed.
+
+Note: In order to alleviate the impact of long-tail distributions, we can adopt a more flexible approach based on *k-places* or "regular equivalence". This approach consists in applying a tolerance threshold (k) during the process of place detection. For instance, if we set k = 1, we admit that two (or more) individuals may differ by one institution; if k = 2, two (or more) individuals may differ by 2 institutions, and so on. 
+
+In this tutorial, we aim to demonstrate that this place-based methodology is a powerful alternative to the usual reliance on bipartite networks or one-mode projections. 
+ 
+![Figure 2 - Places, bipartite and one-mode networks](Images/PlacesDef2.png)  
+<br>
+As shown on the above diagram (Fig.2), places present two major advantages:  
+
+   * they allow to reduce the network without losing too much information;  
+   * they retain the same duality property that we find in two-mode networks. 
+   
+# Objectives 
+
+The purpose of this tutorial is twofold: 
+
+  1. *Substantively*, we aim to identify shared patterns of college affiliation and academic trajectories among our population of American University Men. Ultimately, we seek to better understand the role of alumni networks in shaping the collective identity of American-educated elites in modern China. The underlying hypothesis is twofold: (a) American-educated Chinese played a crucial role in the formation of transnational alumni networks in the early 20th century. (b) These alumni networks, in turn, were essential to individuals' professional career and to strengthening Sino-American relationships at a broader level. 
+  2. *Methodologically*, we aim to devise a standard [workflow](https://www.xmind.net/m/YX2g4H) for detecting, analyzing and interpreting places in two-mode data. We hope that any scholar working with two-mode data can further reuse and adapt this workflow to her own data and research questions (Fig.3). 
+  
+![Figure 3 - Tentative workflow](Images/Workflow.png)  
+For the interactive version, see [Xmind](https://www.xmind.net/m/YX2g4H). 
+
+In the following, we will focus on:  
+
+  1. Detecting and analyzing places (steps 2 and 3)
+  2. Building and analyzing place-based networks (steps 4, 5, 6)
+  3. Filtering the dataset to analyze place formation over time (optional step)
+  
+# Data 
+
+We load the data and we inspect its class (the dataset must be in a "dataframe" format so that the *place()* function can be applied):
+
+```{r warning = FALSE, message = FALSE}
+aucplaces <- read_delim("Data/aucdata.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+aucplaces <- as.data.frame(aucplaces) 
+class(aucplaces) # inspect its class
+```
+The dataset consists of an edge list linking individuals (students) and the colleges they attended. It also includes various attributes related to: 
+
+   * the individuals (elements): nationality, employer/professional affiliation in 1936; 
+   * the colleges (sets): state/region; 
+   * the links (curricula): degree (level and field of study), year of graduation. 
+
+The data includes 418 unique students, among which 234 Chinese (56%) and 184 non Chinese, mostly Americans (43%), and 4 Japanese.
+
+```{r warning = FALSE, message = FALSE}
+
+aucplaces %>% 
+  distinct(Name_eng, Nationality) %>% 
+  count(Nationality) %>% 
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  arrange(desc(n))
+
+```
+Altogether, these students attended 147 colleges, which individually totalled from 1 to 61 curricula (Columbia): 
+
+```{r warning = FALSE, message = FALSE}
+ 
+aucplaces %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  count() %>%
+  filter(n>3)%>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = University)) +
+  geom_col(show.legend = "FALSE") +
+  coord_flip() +
+  labs(title = "American University Men in China", 
+       subtitle = "Most attended universities (more than 3 curricula)", 
+       x = NULL ,
+       y = "Number of curricula", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+
+```
+
+The 418 students and 147 universities represent a total of 682 curricula: 
+
+# Places detection
+
+For finding places in our population of American University Men, we rely on the R package ["Places"](http://lereps.sciencespo-toulouse.fr/new-r-package-places-structural-equivalence-analysis-for-two-mode-networks) developed by Delio Lucena (LEREPS, Science-Po Toulouse). 
+
+First, we install and load the package: 
+```{r warning = FALSE, message = FALSE}
+install.packages("http://lereps.sciencespo-toulouse.fr/IMG/gz/places_0.2.3.tar.gz", repos = NULL, type = "source")
+library(Places)
+```
+
+We can now apply the function *place()*. The function is composed of three arguments. The first argument refers to the dataset (edge list of curricula), the second argument serves to select the elements (here, the students), and the last argument indicates the sets (i.e., the colleges). 
+
+```{r warning = FALSE, message = FALSE}
+Result1 <- places(data = aucplaces, col.elements = "Name_eng", col.sets = "University")
+Result1 <- places(aucplaces, "Name_eng", "University") # shorter formula
+```
+
+
+Based on our dataset of 418 students and 147 universities, 223 unique places are found. These places refer to academic trajectories. Two students belong to the same place if they attended the exact same set of colleges. 
+
+The resulting table contains four main variables, each row corresponds to a unique place:  
+
+  * PlaceNumber/PlaceLabel (unique identifier for each place)
+  * Number of elements (NbElements): number of students in each place
+  * Number of sets (NbSets): number of universities in each place
+  * PlaceDetail: names of students and universities included in each place
+
+We create a dataframe from the list of results for further examination:  
+
+```{r warning = FALSE, message = FALSE}
+
+result1df <- as.data.frame(Result1$PlacesData) 
+
+kable(head(result1df), caption = "First 6 places") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+# Places attributes (quantitative)
+
+
+Most places (179, 80%) ) consist of unique trajectories focused on a single student. These places perfectly identified with their students: 
+```{r warning = FALSE, message = FALSE}
+hist(result1df$NbElements, main = "Students per places (distribution)")
+table(Result1$PlacesData$NbElements)
+round(prop.table(table(Result1$PlacesData$NbElements))*100,2)
+```
+<br>
+Similarly, most places contain a maximum of two universities. This reflects the fact that most students attended a maximum of two different colleges. Very few individuals attended more than one or two universities during their studies: 
+```{r warning = FALSE, message = FALSE}
+hist(result1df$NbSets, main = "Colleges per place (distribution)")
+table(Result1$PlacesData$NbSets)
+round(prop.table(table(Result1$PlacesData$NbSets))*100,2)
+
+```
+
+We can represent simultaneously the number of sets and elements as scatter plots, barplots or boxplots : 
+
+```{r warning = FALSE, message = FALSE}
+library(tidyverse)
+
+ggplot(data = result1df) + 
+        geom_point(mapping = aes(x = NbSets, y = NbElements), 
+                   position = "jitter", alpha = 0.5) + 
+        geom_abline(alpha = 0.5) +
+  labs(x = "Colleges per place", y = "Students per place")+  
+  labs(title = "Places: Quantitative attributes", 
+       caption = "American University Men of China (1936)")
+
+
+```
+
+As a barplot: 
+
+```{r warning = FALSE, message = FALSE}
+
+ggplot(data = result1df) +
+        geom_bar(mapping = aes(x = NbSets, y = NbElements), stat = "identity") +
+  labs(x = "Colleges per place", y = "Students per place")+  
+  labs(title = "Places: Quantitative attributes", 
+       caption = "American University Men of China (1936)")
+
+```
+
+Or alternatively, as a boxplot: 
+```{r warning = FALSE, message = FALSE}
+
+result1df %>%
+  ggplot(aes(as.factor(NbSets), NbElements)) +
+  geom_boxplot(alpha = 0.4, show.legend = FALSE) +
+  labs(x = "Colleges per place", y = "Students per place", 
+  title = "Places: Quantitative attributes", 
+  caption = "American University Men of China (1936)")
+
+```
+
+<br>
+All these visualizations reveal a linear, inverse relationship between the number of students and the number of colleges attended. The majority of places contain just one university attended by many students. This reflects the fact that our dataset contains a handful of prestigious universities which attracted large number of students, whereas most universities were attended by just one or few students. The number of students naturally decreases as the number of colleges increases, which supports our previous observation that most students attended only one university. Very few places include more than 2 colleges. We find only one place with 4 universities and 2 individuals 5 places includes 3 universities with 2 individuals. 
+
+Next, we want to know more about the students and the universities which defined each place. Since it would be time-consuming to examine the 223 places one by one, we first focus on the 13 largest places that include a minimum of 2 students and 2 colleges: 
+```{r warning = FALSE, message = FALSE}
+
+nn2 <- result1df %>% 
+  filter(NbElements >1 & NbSets>1) # 13 places contain at least 2 individuals and 2 universities
+
+kable(nn2, caption = "The 13 most populated places") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+<br>
+
+In order to facilitate the exploration, we can label each place with its corresponding quantitative attributes, as described below:  
+```{r warning = FALSE, message = FALSE}
+
+# find examples for each cases 
+
+# E3S2 : more than 2 students, 2 universities
+E3S2 <- result1df %>% filter(NbElements > 2) %>% filter(NbSets == 2) %>% mutate(Type = "E3S2")
+# E3S1 : more than 2 students, 1 university
+E3S1 <- result1df %>% filter(NbElements > 2) %>% filter(NbSets == 1) %>% mutate(Type = "E3S1")
+# E2S2 : 2 students, 2 universities
+E2S2 <- result1df %>% filter(NbElements == 2) %>% filter(NbSets == 2) %>% mutate(Type = "E2S2")
+# E2S1 : 2 students, 1 university
+E2S1 <- result1df %>% filter(NbElements == 2) %>% filter(NbSets == 1) %>% mutate(Type = "E2S1")
+# E1S3 : one student, more than 2 universities
+E2S3 <- result1df %>% filter(NbElements == 1) %>% filter(NbSets > 2) %>% mutate(Type = "E2S3")
+# E1S2 : one student, 2 universities
+E1S2 <- result1df %>% filter(NbElements == 1) %>% filter(NbSets == 2) %>% mutate(Type = "E1S2")
+# E1S1 : one student, one university
+E1S1 <- result1df %>% filter(NbElements == 1) %>% filter(NbSets == 1) %>% mutate(Type = "E1S1")
+
+ESlist <- bind_rows(E1S1, E1S2, E2S3, E2S1, E2S2, E3S1, E3S2)
+
+kable(head(ESlist), caption = "First 6 places, labeled with their quantitative attributes") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+
+<br>
+Note: You may adjust the threshold to the particular structure of your data. Here, we set the number of sets to 2 because it refers to the average number of curricula, and we set elements to 1 because we are interested in places that involved more than one student, beyond singular trajectories.  
+
+At this stage, it is recommended to carefully examine the list of places, starting from the most important, and gradually expanding the selection to include less populated places. In the next step, we will see how we can use the students' and colleges' attributes to further categorize the places, especially the 44 places (20%) that involve two or more students.
+
+# Places attributes (qualitative)
+
+For this analysis, we rely on a manually annotated dataset: 
+
+```{r warning = FALSE, message = FALSE}
+place_attributes <- read_csv("Data/place_attributes.csv",
+col_types = cols(...1 = col_skip()))
+
+place_attributes
+
+```
+
+After a careful examination, each place has been labeled with the following attributes: 
+
+  * **National profile** (Nationality) : Chinese only, non-Chinese only, multinational)
+  * **Academic profile**: range of disciplines (field_nbr), nature of disciplines (field_group)
+  * **Level of qualification**: range of degrees (LevelNbr), highest degree obtained in each place (degree_high)
+  * **Geographical coverage**: geographical diversity (Region_nbr), regions covered (Region_code)
+  * **Period of study**: same period or not (period_nbr), period of study (period_group)
+
+
+Regarding the **geographical coverage**, we adopt the following code: 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-7zrl">Region_nbr</th>
+    <th class="tg-7zrl">Region_code</th>
+    <th class="tg-7zrl">Description</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-7zrl">Monoregion</td>
+    <td class="tg-7zrl">EAST</td>
+    <td class="tg-7zrl">East Coast</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Monoregion</td>
+    <td class="tg-7zrl">MID</td>
+    <td class="tg-7zrl">Midwest</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Monoregion</td>
+    <td class="tg-7zrl">OTHER - US</td>
+    <td class="tg-7zrl">Other regions in the United States</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Monoregion</td>
+    <td class="tg-7zrl">OTHER - NON US</td>
+    <td class="tg-7zrl">Outside the United States</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Multiregion</td>
+    <td class="tg-7zrl">EM</td>
+    <td class="tg-7zrl">East Coast-Midwest</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Multiregion</td>
+    <td class="tg-7zrl">EO</td>
+    <td class="tg-7zrl">East Coast-Other</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Multiregion</td>
+    <td class="tg-7zrl">MO</td>
+    <td class="tg-7zrl">Midwest-Other</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">Multiregion</td>
+    <td class="tg-7zrl">OTHER</td>
+    <td class="tg-7zrl">Other</td>
+  </tr>
+</tbody>
+</table>
+
+<br> 
+
+Based on the distribution of data and our knowledge of the historical context, we defined three main periods: 
+
+  1. **Phase 1 (1883-1908)**: before the Boxer Indemnity Program was established (Hunt, 1972); 
+  2. **Phase 2 (1909-1918)**: from the beginning of the Boxer Program until the end of First World War (WWI); 
+  3. **Phase 3 (1919-1935)**: after WWI, as the United States emerged as the new leading world power. 
+  
+  
+<br>
+
+Based on the above categories, we found 23 multinational places (52% of places involving more than one student), 12 non-Chinese (27%), and only 9 strictly Chinese places (20%). The Chinese students showed a strong propensity to mingle with non-Chinese students. 
+
+```{r warning = FALSE, message = FALSE}
+place_attributes %>% filter(NbElements > 1) %>% 
+  count(Nationality) %>% 
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  arrange(desc(n))
+```
+
+
+<br>
+From a geographical perspective, American University Men generally showed a strong degree of mobility during their studies. 65% transferred between two or more colleges, among which 60% across different regions (39% of all places), and 40% within the same region (East, Midwest, other) (26% of all places). 
+
+```{r warning = FALSE, message = FALSE}
+place_attributes %>% 
+  count(Mobility) %>% 
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  arrange(desc(n))
+```
+
+
+<br>
+By combining the field of study with the period of study, we can further distinguish between four categories of places. This allows us to measure the relative strength of each place: 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-7s9b{background-color:#E9F7EE;text-align:left;vertical-align:top}
+.tg .tg-imkk{background-color:#4FD093;text-align:left;vertical-align:top}
+.tg .tg-2mon{background-color:#D0EEDC;text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-imkk">&nbsp;&nbsp;&nbsp;<br><span style="font-weight:bold;color:white">Period of study </span><br>&nbsp;&nbsp;&nbsp;<br><span style="font-weight:bold;color:white">Field&nbsp;&nbsp;&nbsp;of study</span>&nbsp;&nbsp;&nbsp;</th>
+    <th class="tg-imkk">&nbsp;&nbsp;&nbsp;<br><span style="font-weight:bold;color:white">SAME&nbsp;&nbsp;&nbsp;TIME</span>&nbsp;&nbsp;&nbsp;</th>
+    <th class="tg-imkk">&nbsp;&nbsp;&nbsp;<br><span style="font-weight:bold;color:white">DIFFERENT&nbsp;&nbsp;&nbsp;TIME</span>&nbsp;&nbsp;&nbsp;</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-2mon">&nbsp;&nbsp;&nbsp;<br><span style="color:black">SAME DISCIPLINE</span>&nbsp;&nbsp;&nbsp;</td>
+    <td class="tg-2mon">&nbsp;&nbsp;&nbsp;<br><span style="color:black">TYPE A : Strong potential&nbsp;&nbsp;&nbsp;for regular&nbsp;&nbsp;&nbsp;interaction (4 places, 9%)</span>&nbsp;&nbsp;&nbsp;</td>
+    <td class="tg-2mon">&nbsp;&nbsp;&nbsp;<br><span style="color:black">TYPE C : Potential&nbsp;&nbsp;&nbsp;for later&nbsp;&nbsp;&nbsp;collaboration (7 places, 16%)</span>&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+  <tr>
+    <td class="tg-7s9b">&nbsp;&nbsp;&nbsp;<br><span style="color:black">DIFFERENT DISCIPLINE</span>&nbsp;&nbsp;&nbsp;</td>
+    <td class="tg-7s9b">&nbsp;&nbsp;&nbsp;<br><span style="color:black">TYPE B: Potential&nbsp;&nbsp;&nbsp;for extra-curricula interaction (8 places, 18%)</span>&nbsp;&nbsp;&nbsp;</td>
+    <td class="tg-7s9b">&nbsp;&nbsp;&nbsp;<br><span style="color:black">TYPE D : Shared academic experience&nbsp;&nbsp;&nbsp;and cultural identity&nbsp;&nbsp;&nbsp;(25 places, 32%)</span>&nbsp;&nbsp;&nbsp;</td>
+  </tr>
+</tbody>
+</table>
+
+
+<br>
+Find examples for each type: 
+
+```{r warning = FALSE, message = FALSE}
+
+typeA <- place_attributes %>% filter(NbElements > 1) %>% 
+  filter(field_nbr == "Monofield") %>% 
+  filter(period_nbr == "SYNC")  %>% 
+  mutate(TypeQuali = "TypeA")
+  
+typeB <- place_attributes %>% filter(NbElements > 1) %>% 
+  filter(period_nbr == "SYNC") %>% 
+  filter(field_nbr == "Multifield") %>% 
+  mutate(TypeQuali = "TypeB")
+
+typeC <- place_attributes %>% filter(NbElements > 1) %>% 
+  filter(field_nbr == "Monofield") %>% 
+  filter(period_nbr == "DIAC")  %>% 
+mutate(TypeQuali = "TypeC")
+
+typeD <- place_attributes %>% filter(NbElements > 1) %>% 
+  filter(period_nbr == "DIAC") %>% 
+  filter(field_nbr == "Multifield") %>% 
+  mutate(TypeQuali = "TypeD")
+
+Typelist <- bind_rows(typeA, typeB, typeC, typeD)
+
+
+Typelist
+
+```
+
+
+<br>
+**Type A** principally includes graduates in sciences from MIT, Columbia, Harvard, Michigan, Nebraska (non-Chinese): 
+```{r warning = FALSE, message = FALSE}
+
+typeA
+
+```
+
+<br>
+**Type B** includes New York-trained financiers and scientists (1919-1924), Michigan-Chigago trained lawyers and scientists (1921-1933), or Yale-Harvard-trained professionals and businessmen (1909-1914): 
+```{r warning = FALSE, message = FALSE}
+
+typeB
+
+```
+
+
+<br>
+**Type C** includes Columbia graduates in economics or medicine in combination with another (preceding) university, as well as more narrowly specialized curricula centered on a single university: 
+```{r warning = FALSE, message = FALSE}
+
+typeC
+
+```
+
+<br>
+**Type D** usually involves a large number of students (more than 10) and present a wide range of profiles, as in P161(3-1) which involved Stanford graduates from different national origins, who graduated in different fields (engineering, humanities) and at different times (between 1905 and 1922). 
+
+```{r warning = FALSE, message = FALSE}
+
+typeD
+
+```
+
+<br>
+In the last step, we use [Multiple Correspondence Analysis (MCA)](http://factominer.free.fr/factomethods/multiple-correspondence-analysis.html) and [hierarchical clustering (HCPC)](http://factominer.free.fr/factomethods/hierarchical-clustering-on-principal-components.html) to group places according to their combinations of attributes. 
+
+# Place classification
+
+First, we need to prepare the data for multiple correspondence analysis (MCA). This implies converting quantitative variables (NbElements, NbSets) into categorical ones, selecting the relevant variables, and setting places labels as row names. 
+
+Based on the distribution of data, we categorize the number of students per place (NbElements) into two categories (1, +1): 
+```{r warning = FALSE, message = FALSE}
+
+# Categorize the number of students per place (NbElements) into two categories (1, +1)
+
+place_attributes_mca <- within(place_attributes, {   
+  NbElements.cat <- NA # need to initialize variable
+  NbElements.cat[NbElements == 1] <- "1"
+  NbElements.cat[NbElements > 1] <- "+1"
+} )
+
+place_attributes_mca$NbElements.cat <- factor(place_attributes_mca$NbElements.cat, levels = c("1", "+1"))
+summary(place_attributes_mca$NbElements.cat) # check that the operation went well
+
+```
+
+<br>
+Similarly, we categorize the number of universities per place (NbSets) into 3 categories (1, 2, +2): 
+```{r warning = FALSE, message = FALSE}
+
+place_attributes_mca <- within(place_attributes_mca, {   
+  NbSets.cat <- NA # need to initialize variable
+  NbSets.cat[NbSets == 1] <- "1"
+  NbSets.cat[NbSets == 2] <- "2"
+  NbSets.cat[NbSets > 2] <- "+2"
+} )
+
+place_attributes_mca$NbSets.cat <- factor(place_attributes_mca$NbSets.cat, levels = c("1", "2", "+2"))
+summary(place_attributes_mca$NbSets.cat) # check
+
+```
+
+<br>
+Finally, we select the relevant variables and we set places labels as row names: 
+```{r warning = FALSE, message = FALSE}
+
+place_attributes_mca <- place_attributes_mca %>% select(-c(PlaceNumber, PlaceDetail, NbElements, NbSets)) 
+place_attributes_mca_rowname <- tibble::column_to_rownames(place_attributes_mca, "PlaceLabel")
+
+```
+<br>
+We can now perform multiple correspondence analysis (MCA). In this tutorial, we rely on the package [FactoMinR](http://factominer.free.fr/) and its companion packages [FactoShiny](http://factominer.free.fr/graphs/factoshiny.html) and [Factoextra](http://www.sthda.com/english/wiki/factoextra-r-package-easy-multivariate-data-analyses-and-elegant-visualization): 
+
+```{r warning = FALSE, message = FALSE}
+# load packages
+library(FactoMineR)
+library(Factoshiny)
+library(factoextra)
+library(explor) # for interactive exploration
+```
+<br>
+We apply the function MCA(): 
+```{r warning = FALSE, message = FALSE}
+res.MCA<-MCA(place_attributes_mca_rowname,graph=FALSE) 
+plot.MCA(res.MCA, choix='var',title="Graph of Variables",col.var=c(1,2,3,4,5,6,7,8,9,10,11,12))
+
+```
+<br>
+*Note: On the above graph, each variable is represented by a distinct color.*
+
+As shown on the graph of variables above, the first dimension captures 16% of information, and the second 8%. Altogether, the two first dimensions capture 24% of information. 9 dimensions are necessary to capture 50% and 36 dimensions to capture 100% information. The first dimension is strongly associated with students’ attributes (nationality, field and period of study), whereas the second is more strongly associated with colleges (geographical) attributes. 
+
+**MCA Graphs colored by quantitative variables**: 
+```{r warning = FALSE, message = FALSE}
+
+grp1 <- as.factor(place_attributes_mca_rowname[, "NbElements.cat"])
+fviz_mca_ind(res.MCA,  habillage = grp1, label = FALSE, 
+             addEllipses = TRUE, repel = TRUE, title = "MCA Graph: Number of students per place") 
+
+grp2 <- as.factor(place_attributes_mca_rowname[, "NbSets.cat"])
+fviz_mca_ind(res.MCA,  habillage = grp2, label = FALSE, 
+             addEllipses = FALSE, repel = TRUE, title = "MCA Graph: Number of colleges per place") 
+
+```
+<br>
+The two graphs above clearly separate multi-student places on the right from singular trajectories on the left, and multi-colleges places on the left from places centered on a single university, on the right.  
+
+**MCA Graphs colored by qualitative variables**: 
+```{r warning = FALSE, message = FALSE}
+
+par(mfrow=c(2,2))
+
+grp3 <- as.factor(place_attributes_mca_rowname[, "Nationality"])
+fviz_mca_ind(res.MCA,  habillage = grp3, label = FALSE, 
+             addEllipses = FALSE, repel = TRUE, title = "Graph of Places: Nationality") 
+
+grp4 <- as.factor(place_attributes_mca_rowname[, "Mobility"])
+fviz_mca_ind(res.MCA,  habillage = grp4, label = FALSE, 
+             addEllipses = TRUE, repel = TRUE, title = "Graph of Places: Mobility") 
+
+grp5 <- as.factor(place_attributes_mca_rowname[, "field_nbr"])
+fviz_mca_ind(res.MCA,  habillage = grp5, label = FALSE, 
+             addEllipses = TRUE, repel = TRUE, title = "Graph of Places: Field of study") 
+
+grp6 <- as.factor(place_attributes_mca_rowname[, "field_group"])
+fviz_mca_ind(res.MCA,  habillage = grp6, label = FALSE, 
+             addEllipses = FALSE, repel = TRUE, title = "Graph of Places: Field of study")
+
+```
+<br>
+The graphs clearly separate multinational, multidisciplinary, multiregional and diachronic places on the right, from narrowly specialized places involving less mobile students on the left. 
+
+Next, we perform a hierarchical clustering (HCPC) on all 36 dimensions in order to further classify places: 
+```{r warning = FALSE, message = FALSE}
+
+res.MCA<-MCA(place_attributes_mca_rowname,ncp=36,graph=FALSE)
+res.HCPC<-HCPC(res.MCA,nb.clust=3,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor map')
+plot.HCPC(res.HCPC,choice='tree',title='Tree map')
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D tree on factor map')
+
+```
+<br>
+The partition is strongly characterized by academic specialization (field_nbr, field_group) and geographical mobility (mobility, region_nbr, region_code), and to a lesser extent, by the period of study and the students’ nationality.  
+
+The algorithm identifies three classes of places: 
+
+  1. **Class 1 (black, left side of the graph)** refers to singular trajectories, i.e. single-student places that perfectly identified with their students. These places involved Chinese students who specialized in professional fields. These students usually attended more than 2 universities and showed a high degree of mobility, transferring between the East Coast, the Midwest, or other regions in the United States. These places offered a potential for later collaboration.
+  2. **Class 2 (red, bottom/center)**: These places involved principally non-Chinese students who usually attended only one university located in the Midwest or on the East Coast. 
+  3. **Class 3 (green, right side)** refers to multinational, multidisciplinary and multilevel places, involving students who studied at different times. Although they did not allow for actual interaction, these places contributed to building a shared academic experience and cultural background among the alumni after their return to China. 
+  
+<br>
+We can finally store the results and examine more closely the paragons, i.e. representative places for each class: 
+```{r warning = FALSE, message = FALSE}
+
+# store results 
+clusters <- res.HCPC$data.clust
+placesclusters <- tibble::rownames_to_column(clusters, "PlaceLabel") %>% rename(MCAcluster = clust)
+
+# identify paragons
+res.HCPC$desc.ind$para 
+```
+
+<br>
+**Paragons for class 1: Single-student places: Post-WWI highly mobile Chinese professionals**
+```{r warning = FALSE, message = FALSE}
+
+para1 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P043(1-2)", "P049(1-2)", "P051(1-2)", "P133(1-2)", "P122(1-2)"))
+
+para1
+
+```
+<br>
+**Paragons for class 2: Single-college places: American undergraduates**
+```{r warning = FALSE, message = FALSE}
+
+para2 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P201(1-1)", "P179(1-1)", "P212(1-1)", "P217(1-1)", "P113(1-2)"))
+
+para2
+
+```
+<br>
+**Paragons for class 3: Multi-student places**
+```{r warning = FALSE, message = FALSE}
+
+para3 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P148(16-1)", "P167(3-1)", "P156(7-1)", "P157(5-1)", "P030(3-2)"))
+
+para3
+
+```
+
+
+# Alternative Visualizations 
+
+You can use [Factoextra](http://www.sthda.com/english/wiki/factoextra-r-package-easy-multivariate-data-analyses-and-elegant-visualization) to improve the above visualizations. Running the lines of code below will improve the dendogram: 
+```{r warning = FALSE, message = FALSE}
+
+par(mfrow=c(1,2))
+
+fviz_dend(res.HCPC, show_labels = FALSE, 
+          main = "Cluster dendogram of Academic Places", 
+          caption = "Based on 'American University Men of China' (1936)")
+
+
+```
+<br>
+You can also create interactive graphs with the package [explor](https://juba.github.io/explor/)
+```{r warning = FALSE, message = FALSE}
+library(explor)
+res <- explor::prepare_results(res.MCA)
+explor::MCA_var_plot(res, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+                     var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = NULL,
+                     size_range = c(10, 300), labels_size = 10, point_size = 40, transitions = TRUE,
+                     labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-1.48, 3.54),
+                     ylim = c(-2.59, 2.43))
+```
+<br>
+
+Point cloud of places, colored by number of students (elements), with confidence ellipses: 
+```{r warning = FALSE, message = FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = "Lab",
+                     ind_lab_min_contrib = 0, col_var = "NbElements.cat", labels_size = 7, point_opacity = 0.5,
+                     opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+<br>
+
+Point cloud of places, colored by number of universities (sets), with confidence ellipses: 
+```{r warning = FALSE, message = FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+                     ind_lab_min_contrib = 0, col_var = "NbSets.cat", labels_size = 9, point_opacity = 0.5,
+                     opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+<br>
+
+Point cloud of places, colored by nationality, with confidence ellipses: 
+```{r warning = FALSE, message = FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = "Lab",
+                     ind_lab_min_contrib = 0, col_var = "Nationality", labels_size = 9, point_opacity = 0.5,
+                     opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+<br>
+
+Point cloud of places, colored by mobility: 
+```{r warning = FALSE, message = FALSE}
+
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = "Lab",
+                     ind_lab_min_contrib = 0, col_var = "Mobility", labels_size = 8, point_opacity = 0.44,
+                     opacity_var = NULL, point_size = 46, ellipses = FALSE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+<br>
+
+Point cloud of places, colored by academic specialization (range): 
+```{r warning = FALSE, message = FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = "Lab",
+                     ind_lab_min_contrib = 0, col_var = "field_nbr", labels_size = 9, point_opacity = 0.5,
+                     opacity_var = NULL, point_size = 64, ellipses = FALSE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+<br>
+
+Point cloud of places, colored by academic specialization (field): 
+```{r warning = FALSE, message = FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = "Lab",
+                     ind_lab_min_contrib = 0, col_var = "field_group", labels_size = 8, point_opacity = 0.44,
+                     opacity_var = NULL, point_size = 46, ellipses = FALSE, transitions = TRUE,
+                     labels_positions = NULL, xlim = c(-1.19, 2.81), ylim = c(-1.76, 2.24))
+```
+
+
+# Concluding remarks
+
+In this tutorial, we learnt how to find places in a two-mode relational dataset linking elements (e.g. students) and sets (e.g. universities). We also saw how to use elements' and sets' attributes to further categorize and interpret the resulting places. 
+
+Using this method, it appears that alumni places formed on the basis on academic prestige and specialization, rather than on the students' nationality. From a historical perspective, we found that the Chinese students showed a greater propensity for international mixing than their foreign counterparts. These American-educated Chinese actively contributed to the emergence of transnational alumni networks in the late 19th-early 20th century. We also found that only a minority of places implied a potential for actual interaction, while the majority created opportunities for professional collaboration and shared cultural values after they returned to China. Eventually, these academic places contributed to the formation of the American-returned students as a new, self-conscious social group in modern China.  
+
+In the next tutorial, we will see how we can build and analyze networks of places in order to further investigate the structure and dynamics of Sino-American alumni networks. 
+
+
+# References
+
+American University Club of Shanghai (1936). *American University Men in China*. Shanghai: Comacrib Press. 
+
+Armand, Cécile. (2022). American University Men of China (1936) (2.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.6370085
+
+Hunt, Michael H. “The American Remission of the Boxer Indemnity: A Reappraisal.” *The Journal of Asian Studies* 31, no. 3 (1972): 539–59.
+
+Pizarro, Narciso. “Appartenances, places et réseaux de places. La reproduction des processus sociaux et la génération d’un espace homogène pour la définition des structures sociales.” *Sociologie et sociétés* 31, no. 1 (2002): 143–61.
+
+Pizarro, Narciso. “Regularidad Relacional, Redes de Lugares y Reproduccion Social.” *Politica y Sociedad* 33 (2000).
+
+Pizarro, Narciso. “Structural Identity and Equivalence of Individuals in Social Networks.” *International Sociology* 22, no. 6 (2007): 767–92.
+
+

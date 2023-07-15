@@ -1,0 +1,397 @@
+---
+title: "A place-based study of alumni networks in modern China (4)"
+subtitle: "Places formation over time" 
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This is the last instalment of our tutorial series devoted to the study of American University Men in China using a place-based methodology. In this tutorial, we show how to filter place-based networks in order to trace the formation of alumni networks over time. 
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(Places)
+library(igraph)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+
+
+In the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places3.html), we learnt how to detect, visualize and analyze sub-communities of academic places and colleges. In this tutorial, we will show how we can filter place-based networks in order to trace the formation of alumni networks over time.  
+
+
+# Workflow
+
+This tutorial proceeds in four steps: 
+
+  1. Split the initial dataset into three time-based samples
+  2. Find places in each period
+  3. Build networks of places and their transposed versions for each period 
+  4. Compare time-based networks visually 
+
+```{r warning = FALSE, message = FALSE}
+
+# load packages
+
+library(tidyverse)
+library(igraph)
+library(Places)
+
+```
+
+
+# Sampling
+
+```{r warning = FALSE, message = FALSE}
+
+# load data 
+
+aucplaces <- read_delim("Data/aucdata.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+aucplaces <- as.data.frame(aucplaces) 
+
+```
+<br>
+Based on the periodization defined in the [first tutorial](https://bookdown.enpchina.eu/AUC/Places1.html), we split the original dataset into three period-based datasets: 
+```{r warning = FALSE, message = FALSE}
+
+# Filter the data by period 
+
+aucp1 <- aucplaces %>% filter(period=="1883-1908") # 94 curricula
+aucp2 <- aucplaces %>% filter(period=="1909-1918") # 251 curricula
+aucp3 <-   aucplaces %>% filter(period=="1919-1935") # 337 curricula
+
+# Inspect the distribution of students' nationalities in each period 
+
+aucp1 %>% distinct(Name_eng, Nationality) %>% group_by(Nationality) %>% count(sort = TRUE) # 5 Chinese, 1 Japanese, 43 Westerners
+aucp2 %>% distinct(Name_eng, Nationality) %>% group_by(Nationality) %>% count(sort = TRUE) # 81 Chinese, 1 Japanese, 66 Westerners
+aucp3 %>% distinct(Name_eng, Nationality) %>% group_by(Nationality) %>% count(sort = TRUE) # 148 Chinese, 2 Japanese, 71 Westerners
+
+```
+<br>
+Next, we apply the function "places" to each time period: 
+
+## Phase 1: 1883-1908
+```{r warning = FALSE, message = FALSE}
+
+resultp1 <- places(aucp1, "Name_eng", "University") 
+
+```
+<br>
+From the original population of 49 students and 49 universities, the algorithm found 42 places (academic trajectories). As in the first tutorial, we create a dataframe in order to examine the resulting places in more detail: 
+
+```{r warning = FALSE, message = FALSE}
+
+resultp1df <- as.data.frame(resultp1$PlacesData) # create dataframe from list of results
+kable(head(resultp1df), caption = "The 6 first places during the first period (1883-1908)") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br> 
+Before 1908, there were only 4 places involving more than one student, with a maximum of four (Princeton). Foreign students clearly dominated. We found only one place - P26(3-1) - which included a Chinese student (Yung Wing's son, Barlett Yung). According to the classification we devised in the [first tutorial](https://bookdown.enpchina.eu/AUC/Places1.html), these places presented a potential for shared academic experience and culture (TYPE D). None on them implied actual interaction, since the students attended the same colleges but at different times: 
+```{r warning = FALSE, message = FALSE}
+np1el <- resultp1df %>% filter(NbElements >1) 
+kable(head(np1el), caption = "The 4 multi-student places during the first period (1883-1908)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br> 
+Twenty-four students attended more than one university, with a maximum of 4 (the missionary Francis L. Hawks Pott, P01(1-4))
+```{r warning = FALSE, message = FALSE}
+np1set <- resultp1df %>% filter(NbSets>1) 
+kable(head(np1set), caption = "The 6 first muti-college places during the first period (1883-1908)") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br>
+Kuang Fuzhuo 鄺富灼 (Fong Foo Sec) defined as P02(1-3) was the Chinese who attended the largest number of universities (California, Columbia, Pomona). Next, we find two Chinese who each attended two universities: Kong Xiangxi P16(1-2) studied at Yale and Oberlin, and Lo Panhui 羅泮輝 (Pan H. Lo, P17(1-2)) studied at the University of Chicago and Harvard. Other Chinese students attended just one university. 
+
+As a conclusion, in this early period preceding the Boxer Indemnity Program, our group of American University Men did not really form a "network". Singular trajectories dominated. Very few places included more than one student, and when it was the case, they did not imply actual interaction between the students. Alumni networks began to take shape during the second period, after the enactment of the Boxer Indemnity Program. 
+
+## Phase 2: 1909-1918
+```{r warning = FALSE, message = FALSE}
+
+resultp2 <- places(aucp2, "Name_eng", "University") 
+```
+<br>
+During the second period, 105 places were identified from a total population of 148 students and 82 universities. 
+
+```{r warning = FALSE, message = FALSE}
+
+resultp2df <- as.data.frame(resultp2$PlacesData) # create dataframe from list of results
+kable(head(resultp2df), caption = "The 6 first places during the second period (1909-1918)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br> 
+Four places involved two or more students who attended more than one college, all located on the East Coast (Columbia, Princeton, Harvard, Yale, MIT): 
+```{r warning = FALSE, message = FALSE}
+np2 <- resultp2df %>% filter(NbElements >1 & NbSets>1) 
+kable(head(np2), caption = "The 4 most important places during the second period (1909-1918)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br> 
+23 places involved more than students and 61 included more than one college. 
+```{r warning = FALSE, message = FALSE}
+np2el <- resultp2df %>% filter(NbElements >1) 
+kable(head(np2el), caption = "The 6 first muti-student places during the second phase (1909-1918)") %>%
+  kable_styling(full_width = F, position = "left")
+np2set <- resultp2df %>% filter(NbSets>1)
+kable(head(np2set), caption = "The 6 first multi-college places during the second phase (1909-1918)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+## Phase 3: 1919-1935
+
+```{r warning = FALSE, message = FALSE}
+
+resultp3 <- places(aucp3, "Name_eng", "University") 
+```
+<br>
+During the last phase, 116 places were identified from a total population of 221 students and 82 universities. 
+```{r warning = FALSE, message = FALSE}
+resultp3df <- as.data.frame(resultp3$PlacesData) # create dataframe from list of results
+kable(head(resultp3df), caption = "The 6 first places during the last period (1919-1935)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br> 
+Five places involved two or more students who attended more than one college. Most of them remained based on the East Coast (Columbia, Harvard, NYU, Pennsylvania) but we also notice a shift toward the Midwest (Chicago, Michigan, Ohio State, Wisconsin): 
+```{r warning = FALSE, message = FALSE}
+np3 <- resultp3df %>% filter(NbElements >1 & NbSets>1) 
+kable(head(np3), caption = "The 5 most important places during the last phase (1919-1935)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br> 
+25 places involved more than students and 66 included more than one college: 
+```{r warning = FALSE, message = FALSE}
+np3el <- resultp3df %>% filter(NbElements >1) 
+kable(head(np3el), caption = "The 6 first multi-student places during the last phase (1919-1935)") %>%
+  kable_styling(full_width = F, position = "left")
+np3set <- resultp3df %>% filter(NbSets>1)
+kable(head(np3set), caption = "The 6 first multi-college places during the last phase (1919-1935)") %>%
+  kable_styling(full_width = F, position = "left")
+```
+<br>
+As the network densified, we see more complex patterns of academic specialization emerging during this period, such as New York-trained bankers and businessmen (P010), Michigan-Chicago lawyers (P011), and Ohio/Pennsylvania graduates in business administration (insurance, railway) (P014). 
+
+Finally, we can export the results (list of places) for further analysis in Excel or SNA software: 
+```{r warning = FALSE, message = FALSE}
+
+write.csv(resultp1df, "placesp1.csv")
+write.csv(resultp2df, "placesp2.csv")
+write.csv(resultp3df, "placesp3.csv")
+```
+
+# Networks 
+
+For each period, we will create the corresponding network of places and its transposed network of colleges. The successive visualizations reveal the progressive formation of alumni networks over time. 
+
+## Phase 1
+
+Create network of places linked by colleges: 
+```{r warning = FALSE, message = FALSE}
+
+# Network of Places (academic trajectories) linked by universities (P)
+
+bimodp1p<-table(resultp1$Edgelist$Places, resultp1$Edgelist$Set) # create adjacency matrix from Edgelist 
+PlacesMatp1p<-bimodp1p %*% t(bimodp1p) 
+diag(PlacesMatp1p)<-0
+
+```
+<br>
+Create network of colleges linked by places 
+```{r warning = FALSE, message = FALSE}
+
+# Network of universities linked by places (academic trajectories) (P* = transposed network of P P*) (cf. Pizarro 2009)
+
+bimodp1u<-table(resultp1$Edgelist$Set, resultp1$Edgelist$Places)
+PlacesMatp1u<-bimodp1u %*% t(bimodp1u)
+diag(PlacesMatp1u)<-0
+
+```
+<br>
+Build networks from adjacency matrices with igraph
+```{r warning = FALSE, message = FALSE}
+
+library(igraph)
+PlacesMatp1pNet<-graph_from_adjacency_matrix(PlacesMatp1p, mode="undirected", weighted = TRUE)
+PlacesMatp1uNet<-graph_from_adjacency_matrix(PlacesMatp1u, mode="undirected", weighted = TRUE)
+
+```
+<br>
+Export the edge list for re-use in SNA software: 
+```{r warning = FALSE, message = FALSE}
+# convert igraph object into edge list 
+edgelistp1p <- as_edgelist(PlacesMatp1pNet)
+edgelistp1u <- as_edgelist(PlacesMatp1uNet)
+
+# export edge and node lists 
+write.csv(edgelistp1p, "edgelistp1p.csv")
+write.csv(edgelistp1u, "edgelistp1u.csv")
+```
+<br>
+Visualize the networks
+```{r warning = FALSE, message = FALSE}
+plot(PlacesMatp1pNet, 
+     vertex.color = "red", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp1pNet), # node size proportionate to degree centrality
+     edge.width=E(PlacesMatp1pNet)$weight, # edge width proportionate to ties weight 
+     main="Network of places: Phase 1 (1883-1908)",
+     sub = "Node size proportionate to degree centrality") 
+```
+
+```{r warning = FALSE, message = FALSE}
+plot(PlacesMatp1uNet, 
+     vertex.color = "steel blue", 
+     vertex.shape="square", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp1uNet), # node size proportionate to degree centrality
+     edge.width=E(PlacesMatp1uNet)$weight, # edge width proportionate to ties weight 
+     main="Network of colleges: Phase 1 (1883-1908)", 
+     sub = "Node size proportionate to degree centrality")
+```
+
+
+## Phase 2 
+
+Create networks
+```{r warning = FALSE, message = FALSE}
+# Network of Places (academic trajectories) linked by universities (P)
+
+bimodp2p<-table(resultp2$Edgelist$Places, resultp2$Edgelist$Set) # create adjacency matrix from Edgelist 
+PlacesMatp2p<-bimodp2p %*% t(bimodp2p) 
+diag(PlacesMatp2p)<-0
+
+# Network of universities linked by places (academic trajectories) (P* = transposed network of P P*) (cf. Pizarro 2009)
+
+bimodp2u<-table(resultp2$Edgelist$Set, resultp2$Edgelist$Places)
+PlacesMatp2u<-bimodp2u %*% t(bimodp2u)
+diag(PlacesMatp2u)<-0
+
+# build network from adjacency matrix with igraph
+library(igraph)
+PlacesMatp2pNet<-graph_from_adjacency_matrix(PlacesMatp2p, mode="undirected", weighted = TRUE)
+PlacesMatp2uNet<-graph_from_adjacency_matrix(PlacesMatp2u, mode="undirected", weighted = TRUE)
+
+
+#  convert into edge list for re-use in SNA software
+edgelistp2p <- as_edgelist(PlacesMatp2pNet)
+edgelistp2u <- as_edgelist(PlacesMatp2uNet)
+
+# export edge and node lists 
+write.csv(edgelistp2p, "edgelistp2p.csv")
+write.csv(edgelistp2u, "edgelistp2u.csv")
+```
+<br>
+Visualize graphs
+```{r warning = FALSE, message = FALSE}
+plot(PlacesMatp2pNet, 
+     vertex.color = "red", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp2pNet)/2.5, # size of node proportionate to degree centrality
+     edge.width=E(PlacesMatp2pNet)$weight, # edge width proportionate to number of ties 
+     main="Network of places: Phase 2 (1909-1918)",
+     sub = "Node size proportionate to degree centrality") 
+```
+
+```{r warning = FALSE, message = FALSE}
+
+plot(PlacesMatp2uNet, 
+     vertex.color = "steel blue", 
+     vertex.shape="square", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp2uNet), # node size proportionate to degree centrality
+     edge.width=E(PlacesMatp2uNet)$weight, 
+     main="Network of colleges: Phase 2 (1909-1918)", 
+     sub = "Node size proportionate to degree centrality") 
+     
+```
+
+## Phase 3 
+
+Create networks
+```{r warning = FALSE, message = FALSE}
+# Network of Places (academic trajectories) linked by universities (P)
+
+bimodp3p<-table(resultp3$Edgelist$Places, resultp3$Edgelist$Set) # create adjacency matrix from Edgelist 
+PlacesMatp3p<-bimodp3p %*% t(bimodp3p) 
+diag(PlacesMatp3p)<-0
+
+# Network of universities linked by places (academic trajectories) (P* = transposed network of P P*) (cf. Pizarro 2009)
+
+bimodp3u<-table(resultp3$Edgelist$Set, resultp3$Edgelist$Places)
+PlacesMatp3u<-bimodp3u %*% t(bimodp3u)
+diag(PlacesMatp3u)<-0
+
+# build network from adjacency matrix with igraph
+library(igraph)
+PlacesMatp3pNet<-graph_from_adjacency_matrix(PlacesMatp3p, mode="undirected", weighted = TRUE)
+PlacesMatp3uNet<-graph_from_adjacency_matrix(PlacesMatp3u, mode="undirected", weighted = TRUE)
+
+
+# convert into edge list for re-use in SNA software
+edgelistp3p <- as_edgelist(PlacesMatp3pNet)
+edgelistp3u <- as_edgelist(PlacesMatp3uNet)
+
+# export edge and node lists 
+write.csv(edgelistp3p, "edgelistp3p.csv")
+write.csv(edgelistp3u, "edgelistp3u.csv")
+```
+<br>
+Visualize graphs
+```{r warning = FALSE, message = FALSE}
+plot(PlacesMatp3pNet, 
+     vertex.color = "red", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp3pNet)/2.5, # node size proportionate to degree centrality
+     edge.width=E(PlacesMatp3pNet)$weight, 
+     main="Network of places: Phase 3 (1919-1935)",
+     sub = "Node size proportionate to degree centrality")
+```
+
+```{r warning = FALSE, message = FALSE}
+
+plot(PlacesMatp3uNet, 
+     vertex.color = "steel blue", 
+     vertex.shape="square", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size = degree(PlacesMatp3uNet), # node size proportionate to degree centrality
+     edge.width=E(PlacesMatp3uNet)$weight, 
+     main="Network of colleges: Phase 3 (1919-1935)",
+     sub = "Node size proportionate to degree centrality")
+     
+```
+
+# Conclusion
+
+In the early phase (1883-1908), before the Boxer Indemnity Program was started, American University Men did not really form a network. Singular trajectories and geographical dispersion dominated during this period. We identified only four places (out of 42) which involved more than one student, but none of them attended the same colleges at the same time.
+
+The second phase opened with the enactment of the Boxer Indemnity Program in 1908. During this ten-year period, the first alumni networks emerged around three core colleges based on the East Coast (Columbia, Harvard, MIT). Geographical proximity and academic prestige formed the basis of these emerging networks. Multi-student places grew in importance and implied actual interaction between the students. 
+
+After World War I, East Coast-based colleges maintained their prominence but new academic poles emerged in the Midwest (Michigan, Chicago, Ohio). This shift away from the East Coast was driven by academic specialization (law, finance, railway administration) and the search for lower costs of living during the Great Depression.  
+

@@ -1,0 +1,3165 @@
+---
+title: "American University Men in China: A Sociography"
+subtitle: "Based on the 1936 directory of the American University Club of Shanghai"
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This essay aims at a sociography of the members of the American University Club (AUC) of Shanghai based on a directory published in 1936. 
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    theme: readable # all theme -> https://bootswatch.com/3/
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+library(scales)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(knitr)
+library(DT)
+
+integer_breaks <- function(n = 5, ...) {
+  fxn <- function(x) {
+    breaks <- floor(pretty(x, n, ...))
+    names(breaks) <- attr(breaks, "labels")
+    breaks
+  }
+  return(fxn)
+}
+
+
+```
+
+# Prologue
+
+## Research context
+
+**The American University Club (AUC) of Shanghai**
+
+The American University Club (AUC) was one of the earliest and most important organizations of American university alumni in pre-1949 China. Established by American expatriates in China before 1902, its membership was initially restricted to foreigners. But as early as 1908, Chinese graduates of American universities were invited to join the club as well. Thereafter, Chinese membership steadily increased over time and became the majority in the early 1930s, rising from 97 (out of 196) in 1930 to 207 (out of 383 in 1933) and 204 (out of 396) in 1935. The proportion of missionaries declined while that of China-born Americans increased. 
+The main goal of the club was to provide former graduates of American universities with a common meeting ground in China. As such, it was pivotal in shaping the American-returned students as a new, highly self-conscious social group in Republican China. It became an essential platform for consolidating the links established during their studies after they returned to China and for fostering a sense of solidarity across the successive generations of American-educated Chinese. It was also a uniquely transnational organization that mingled Chinese and American expatriates based on their common educational background. As such, it also contributed to the emergence of the first global elite in pre-1949 China. 
+In order to strengthen the links between its members, the club held an annual dinner, monthly tiffins, garden parties, barbecues, dinner dances and many other social gatherings. The meeting place shifted over time from the Astor House to the Palace Hotel, the Old Carlton, the Union Club, and the American Club. Besides the usual functions of entertaining and networking, the club granted scholarships to prospective students in the United States and organized conferences to disseminate useful information about study abroad and other issues related to education. 
+
+**About the source**
+
+Since its archives have been lost, it remains difficult to document the history of the club. The local press in Shanghai and the directory that the club published in 1936 ^[American University Club of Shanghai. *American University Men in China*. Shanghai: Comacrib Press, 1936.] constituted our two major sources of information (Boynton, 1936). 
+
+The above mentioned directory is divided into two parts. The first part consists of a series of essays that explore American University Men (AUM)’s contributions in various fields (education, government, engineering, banking, industry, law, medicine, journalism, philanthropy). In addition, one essay traces the history of the club and one deals with Chinese fraternities in the United States and China.  
+The second part contains the list of AUC members with the university(ies) in which they studied, the degree(s) they earned and the year of graduation. It also includes various documents related to the club (by-laws, list of life members, members of the board of directors, past presidents, program for the year 1936-7), an index of universities and the list of contributors with a short biography for each of them. 
+The directory is richly illustrated with photographs of AUC members, most of them being taken during club meetings and other social gatherings. 
+
+## Workflow 
+
+In this essay, we adopt an integrative approach (Levine, 2022) to explore the multiple dimensions of the club and its members. This multidimensional analysis combines various methods and proceed in three major steps: 
+
+  1. **General overview** of the population relying on basic statistical analyses
+  2. **Correspondence analysis** is used to detect patterns of correlation between pairs of variables (packages [FactoMinR/FactoShiny](http://factominer.free.fr/factomethods/multiple-correspondence-analysis.html)): 
+      
+      2.1.Correspondence Analysis (CA) is applied to educational institutions and fields of study to examine Chinese students' educational choices (major and university) and to detect patterns of academic specialization and/or competition between American universities competing for attracting Chinese students; 
+      2.2. Multiple correspondence analysis and hierarchical clustering are used to cluster individuals based on shared attributes. 
+      
+  3. **Sequence Analysis** and [Sankey diagrams](https://www.r-graph-gallery.com/sankey-diagram.html) are mobilized to model, visualize and compare individuals' educational trajectory (package [TraMinR](http://traminer.unige.ch/))  
+  
+Additionally, we will rely on **Geographical Information System (GIS)** to map the geographies of AUC members' education and employment and **Social Network Analysis (SNA)** to reconstruct individuals' networks. 
+
+More specifically, SNA will be used to create three kinds of affiliation (or two-mode) networks: 
+
+  1. **Person-university (PU)**: to examine whether/to what extent members of the AUC studied/graduated from the same university, and to detect clusters of affiliations based on shared alma mater. We propose to build two kinds of PU networks: (1) a complete network retaining all curricula for each individual, including duplicates (multiple degrees in the same university) (2) a weighed network retaining one single link (curriculum) for each pair of individual-university, weighted by the number of curricula (indicating the strength of the tie between the individual and the university). We will explore the impact of various attributes on the resulting networks, especially nationality and period of study (start year/end year) for person-nodes, and region for university-nodes. In the weighted network we will select the date of the highest degree obtained. We can then filter by year / period to create by time-based subnetworks in order to examine whether individuals studied at the same time and had a chance to actually meet, or whether they were just affiliated on paper. In the former case, each link points to a "real" relation, whereas the latter creates a potential for interaction. 
+  2. **Person-employer (PE)**: to examine who, whether and to what extent AUC members worked for the same employers, whether / how often they became colleagues. The ultimate goal is to detect patterns of affiliations based on shared employers. As explanatory variables, we will use the field of study, the university and the year of graduation for persons. For employers, we will use the sector of activity (2 levels) and the city/location in which it was based.  
+  3. A larger multiplex network (or hyper graph) will merge the two previous ones - i.e. educational and professional links - in order to examine whether individuals who graduated from the same university were likely to worked for the same employer later in their career, i.e. to detect clusters of affiliations between individuals, universities, and employers. For institutions (employers and universities), we rely on a binary classification (education/employer) as the main attribute and the sector as secondary attribute for employers. For persons, we use the field of study, the highest degree, the university and graduation year as explanatory variables. 
+  
+GIS will be used for creating two sets of maps: 
+
+  1. **State-level**: we will map the relative contribution/attraction of states in the educational landscape, using a color gradient for the total number of curricula in each state. We will create three time-based maps for each period in order to examine how the geographies of education change over time. We will focus on Chinese graduates, which we will compare with their Western and Japanese fellows in order to determine whether/how their choice differed. 
+  2. **University or city-level**: we will map the relative contribution/attraction of universities, using circles proportionate to the number of curricula and color for the field of study. We will create three time-based maps for each period in order to examine how the geographies of education change over time. We will focus on Chinese gradutes, which we will compare to their Western and Japanese fellows, in order to determine whether/how their choice differed. We will also create distinct maps for each major field of study in order to examine whether/how certain universities specialized in specific fields. 
+
+## Getting Started 
+
+Load packages: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(tidyverse)
+library(plotly)
+library(scales)
+```
+
+Load data: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(readr)
+auc <- read_delim("Data/auc.csv", ";", escape_double = FALSE, 
+    trim_ws = TRUE)
+
+
+```
+
+# Data 
+
+
+The dataset contain 682 observations (curricula), referring to 418 unique individuals (i.e. an average of 1.6 curriculum per individual). 
+
+For each individual, the table indicates the following information: 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-bobw{font-weight:bold;text-align:center;vertical-align:bottom}
+.tg .tg-j6zm{font-weight:bold;text-align:left;vertical-align:bottom}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-j6zm">Label</th>
+    <th class="tg-bobw">Description</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-j6zm">Name_eng</td>
+    <td class="tg-7zrl">Name in English or romanized transliteration of Chinese name</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Name_zh</td>
+    <td class="tg-7zrl">Name in Chinese </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Nationality</td>
+    <td class="tg-7zrl">Nationality (Chinese, Western, Japanese)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">University</td>
+    <td class="tg-7zrl">University of graduation</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">State</td>
+    <td class="tg-7zrl">State in which the university was located in the United States</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Region</td>
+    <td class="tg-7zrl">Region in the United States or world region (14 different regions)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Degree_source</td>
+    <td class="tg-7zrl">Academic degree (as given in the original source)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Degree_level</td>
+    <td class="tg-7zrl">Degree level (Bachelor, Master, Doctorate, certificate, undetermined)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Field_main</td>
+    <td class="tg-7zrl">Field of study (main)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Field_2</td>
+    <td class="tg-7zrl">Field of study (detail)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Degree_full</td>
+    <td class="tg-7zrl">Standardized degree: level_field(main)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Honorary</td>
+    <td class="tg-7zrl">Honorary degree or not</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Year_start</td>
+    <td class="tg-7zrl">Year he/she enrolled</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Year_end</td>
+    <td class="tg-7zrl">Year he/she graduated</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Life_member</td>
+    <td class="tg-7zrl">Year when he/she became a life member of the American University Club </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Deceased</td>
+    <td class="tg-7zrl">Whether the individual is deceased </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Employer_main</td>
+    <td class="tg-7zrl">Name of employer (main level)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Employer_2</td>
+    <td class="tg-7zrl">Employer (sublevel)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Sector_1</td>
+    <td class="tg-7zrl">Sector of activity (first level)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Sector_2</td>
+    <td class="tg-7zrl">Sector of activity (second level)</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Country</td>
+    <td class="tg-7zrl">Country in which the individual was employed in 1936</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">City</td>
+    <td class="tg-7zrl">City in which the individual was employed in 1936</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Street_name</td>
+    <td class="tg-7zrl">Office or personal address: Street name (main) </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Street_2</td>
+    <td class="tg-7zrl">Office or personal address: Street name (secondary) </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Street_nbr</td>
+    <td class="tg-7zrl">Office or personal address: Street number (secondary) </td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Building</td>
+    <td class="tg-7zrl">Office building</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">Page</td>
+    <td class="tg-7zrl">Page number in the original source</td>
+  </tr>
+  <tr>
+    <td class="tg-j6zm">PDF</td>
+    <td class="tg-7zrl">Page in the PDF document (digized text)</td>
+  </tr>
+</tbody>
+</table>
+
+
+
+
+
+# Nationality 
+
+To which national group did the American University Men belong? From which country did they come from? 
+
+If we focus on unique individuals, Chinese nationals represented the majority of AUM (232, 56%), followed by Westerners - mostly American (182, 44%). Japanese members represented a minority (4, 1%). 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_nation_uniq_count <- auc %>% 
+  distinct(Name_eng, Nationality) %>% 
+  drop_na(Nationality) %>% 
+  group_by(Nationality) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%"))
+
+auc_nation_uniq_count %>% arrange(desc(n))
+
+```
+
+<br>
+If we consider the total number of curricula instead of individuals, Chinese graduates clearly dominated (399 curricula, 58%), which suggests that they generally earned more degrees than their Western (278, 41%) and Japanese fellows (6, 1%): 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_nation_count <- auc %>% 
+  drop_na(Nationality) %>% 
+  group_by(Nationality) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%"))
+
+auc_nation_count %>% arrange(desc(n))
+
+```
+
+
+# Individual Curricula
+
+How many degrees did they obtain individually?  
+
+```{r, warning=FALSE, message=FALSE}
+
+
+auc_cur_count <- auc %>% 
+  drop_na(Nationality) %>% 
+  group_by(Name_eng, Name_zh, Nationality) %>% 
+  tally()
+
+p1 <- plot_ly(auc_cur_count, x = ~Nationality, y = ~n) %>%
+  add_boxplot(color = ~Nationality) 
+
+p1 %>% 
+  layout(title = list(text = "Chinese and foreign graduates in the United States"), 
+         yaxis = list(title = "Number of curricula per individual")) %>% hide_legend()
+
+
+```
+
+<br>
+On average, Chinese graduates enrolled in two curricula, with a minimum of one and a maximum of four (four individuals: Stephen Hu 胡梅基, Tsefang Huang 黃子方, J. Usang Ly 黎照铰, Y.F.Zung 鄭日孚). Westerners held the record (6 distinct curricula for Carleton Lacy) but the median was lower (1) than their Chinese fellows (2). Japanese students stood in between (1 on average, 2 maximum). 
+
+Record degree holders: 
+```{r warning=FALSE, message=FALSE}
+
+auc_cur_count %>% 
+  filter(n>3) %>% 
+  arrange(desc(n))
+
+```
+<br>
+Let's create a new variable for each individual's academic record: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc2 <- inner_join(auc, auc_cur_count) %>% 
+  rename(nDeg = n) 
+
+```
+<br>
+Make a histogram:
+
+```{r, warning=FALSE, message=FALSE}
+
+p2 <- auc2 %>% 
+  drop_na(nDeg) %>% 
+  drop_na(Nationality) %>%
+  ggplot(aes(x=nDeg, fill = Nationality)) +
+  geom_histogram(alpha = 0.8) +
+  labs(title = "American University Men in China", 
+       subtitle = "Individual curricula", 
+       x = "Number of degrees",
+       y = "Number of individuals", 
+       color = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig2 <- ggplotly(p2)
+
+fig2
+  
+```
+<br>
+Most Chinese and Japanese students earned at least two degrees, which supports Paul Meng Zhi's survey conducted five years earlier on a sample population of some 238 Chinese who studied in the United States between 1847 et 1920  (Meng, 1931, p.9). Most Chinese students in the United States earned at least a Master's degree, whereas the majority of Westerners obtained just one degree (and therefore did not go beyond the Bachelor's level. The level of education will be examined more closely later in the essay. 
+
+# Length of study
+
+For how long did they study? 
+
+To answer the question, we need to define the unique period of study for each individual. First, we create a new variable "year" to obtain the starting and ending year for each curricula: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc3 <- auc2 %>% 
+  filter(!Honorary %in% c("Honorary")) %>%
+  pivot_longer(
+    cols = starts_with("Year"),
+    names_to = "start_end",
+    names_prefix = "Year",
+    values_to = "year") %>%
+  mutate(start_end = str_remove_all(start_end,"_"))
+
+kable(auc3 %>% distinct(Nationality, Name_eng, Name_zh, nDeg, start_end, year) %>% 
+  arrange(desc(nDeg), year)) %>% head()
+
+```
+
+<br>
+Notice that we filter out honorary degrees in order to focus on the actual period of study. Some of the most prominent members were granted honorary degrees long after they had finished their studies. For instance, Julean Arnold received a honorary law degree from St. John's University in 1919, seventeen years after he earned his bachelor in sciences from the University of California (1902). T.V. Soong was also granted an honorary degree in law from St. John's in 1929, twelve years after he graduated from Harvard (B.A. 1917). Similarly, H.H. Kung received an honorary LL.D from Oberlin University in 1926, 20 years after he earned his bachelor's degree from the same university: 
+
+```{r warning=FALSE, message=FALSE}
+
+kable(auc2 %>% 
+  filter(Honorary == "Honorary") %>%
+  select(Nationality, Name_eng, Name_zh, Honorary, Degree_source, University, Year_start) %>%
+  arrange(Nationality, Name_eng))
+
+```
+
+
+Based on this new variable, we can compute the length of studies for each individual: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_length <- auc3 %>%
+  group_by(Name_eng, Name_zh, Nationality, nDeg) %>%
+  summarise(start = min(year), end = max(year)) %>%
+  mutate(length = (end-start+1))
+
+kable(auc_length %>% 
+  arrange(desc(length))) %>% head()
+
+```
+
+
+<br>
+We append the new information to the main dataset:
+
+```{r warning=FALSE, message=FALSE}
+
+
+auc4 <- inner_join(auc2, auc_length, by = "Name_eng") %>% 
+  rename(Name_zh = Name_zh.x, Nationality = Nationality.x, nDeg = nDeg.x)
+
+auc4$Name_zh.y <- NULL
+auc4$Nationality.y <- NULL
+auc4$nDeg.y <- NULL
+
+auc4 %>% filter(Year_end == end) %>% 
+  drop_na(Degree_source)%>%
+  select(Nationality, Name_eng, Year_end, Degree_source, University, length) %>%
+  arrange(desc(length), Year_end)
+
+```
+
+<br>
+We make a histogram: 
+
+```{r warning=FALSE, message=FALSE}
+
+p3 <- auc_length %>% 
+  drop_na(length) %>% 
+  group_by(length)  %>% 
+  count()%>%
+  ggplot(aes(x=length, y = n)) +
+  geom_col(alpha = 0.8) +
+  labs(title = "American University Men in China", 
+       subtitle = "Length of studies", 
+       x = "Number of years",
+       y = "Number of individuals", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig3 <- ggplotly(p3)
+
+fig3
+  
+```
+
+<br>
+The majority of students stayed for only one year (219). The number of graduates decreased as the length of studies increased. 77 students stayed between two (36) and three (41) years. 28 complied to the regular four-year period of college study, which again supports Paul Meng Zhi's survey. 26 stayed for 5 years, 13 for 6 years, 15 between 7 and 10 years, and the remaining stayed for more than 10 years. Those who studied for more than 6 years may have conducted post-graduate work (such as William Z.L. Sung) or had to interrupt their studies for some reason (e.g. Fred M.C. Chu):
+
+```{r warning=FALSE, message=FALSE}
+auc4 %>% 
+  filter(length >6 & length < 10) %>% 
+  select(Nationality, Name_eng, length, nDeg, Year_end, Degree_source, University)  %>%
+  arrange(desc(length), Name_eng)
+  
+```
+<br>
+Abnormally long periods of study (over 10 years) probably refer to honorary degrees that were not specified as such in the original source:  
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% filter (length >=10) %>%
+  select(Nationality, Name_eng, length, nDeg)  %>% 
+  distinct() %>% 
+  arrange(desc(length), Nationality, Name_eng)
+  
+```
+<br>
+Among the 37 individuals whose period of study exceeded 10 years, we find a majority of Westerners: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% filter (length >=10) %>% 
+  distinct(Nationality, Name_eng, Name_zh)%>% 
+  group_by(Nationality) %>% 
+    count(sort = TRUE)
+  
+```
+<br>
+Based on the new variable "year", we can also select the highest degree obtained by each individual. This selection will be useful for conducting Multiple Correspondence analysis (MCA), which requires that we retain only one degree for each individual (the highest, not including honorary degrees): 
+
+```{r warning=FALSE, message=FALSE}
+
+last <- auc_length %>% select(Name_eng, Name_zh, Nationality, end) %>% 
+  rename(Year_end = end)%>%
+  distinct()
+  
+highest <- auc4 %>% inner_join(last)
+
+datatable(highest %>%
+  select(Name_eng, Name_zh, Nationality, nDeg, length, Year_end, Degree_level, Field_main, Field_2, University) %>%
+    arrange(desc(nDeg)))
+
+```
+<br>
+The new list contains 442 observations, referring to 442 academic degrees, not individuals. There remained 23 individuals who earned concurrently two (or even three) degrees the same year, in different fields or universities: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest2 <- highest %>% group_by(Name_eng) %>% 
+  count(sort = TRUE) %>% 
+  filter(n>1) 
+
+highest2
+
+
+```
+<br>
+For these particular cases, we will have to retain only one of the two degrees before we apply MCA: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest %>% 
+  filter(Name_eng %in% highest2$Name_eng)
+
+```
+<br> 
+This is an operation that requires interpretation and which we will perform manually. The method for selecting the highest degrees is described in the appendix.  
+
+## Nationality
+
+How did the length of study vary across national groups? 
+
+```{r, warning=FALSE, message=FALSE}
+
+p4 <- auc_length %>% 
+  drop_na(length) %>%
+  ggplot(aes(x=length, fill = Nationality)) +
+  geom_histogram(alpha = 0.8) +
+  labs(title = "American University Men in China: Length of study", 
+       subtitle = "Length of study", 
+       x = "Number of years",
+       y = "Number of individuals", 
+       fill = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig4 <- ggplotly(p4)
+
+fig4
+  
+```
+
+<br> 
+Boxplots: 
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(length) %>%  
+  ggplot(aes(x= length, y = Nationality, color = Nationality)) +
+  geom_boxplot(alpha = 0.4, show.legend = FALSE) +
+  labs(title = "American University Men of China", 
+       subtitle = "Length of study",
+       x = "Years",
+       y = NULL,
+       color = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)") 
+
+
+```
+
+<br>
+
+Interactive boxplots
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p5 <- plot_ly(auc4, x = ~Nationality, y = ~length) %>%
+  add_boxplot(color = ~Nationality) 
+
+p5 %>% 
+  layout(title = list(text = "American University Men of China: Length of study"), 
+         yaxis = list(title = "years")) %>% 
+  hide_legend()
+
+
+```
+
+<br> 
+Westerners presented a wider timescope (from 1 to 36 years) than their Chinese fellows (from 1 to 21 years) but the two groups shared the same median (3 years). Japanese graduates displayed the narrowest spectrum (1) but this mostly reflects their statistical insignificance.
+
+## Discontinuity
+
+The purpose of this section is to devise a method for detecting honorary degrees and discontinuous course of study. We can safely assume that individuals who earned only two degrees but whose period of study exceeded a certain number of years fell under such situation. We can think of several ways of finding such cases:
+
+  * Calculate the time lag between the two last degrees.
+  * Compute the ratio between the number of degrees (nDeg) and the length of studies (duration). It is the easiest way to proceed. On average, it took from one to two years to earn a degree. So if the ratio duration / nDeg exceeds a certain value (to determine), it is likely that the individual obtained some honorary degree or interrupted his studies.  
+  
+Let's start by plotting the number of degrees in relation to the length of studies: 
+
+```{r warning=FALSE, message=FALSE}
+p6 <- auc4 %>% 
+  drop_na(nDeg, length) %>%
+  ggplot(aes(length, nDeg, color = Nationality)) +
+  geom_jitter(alpha = 0.5, show.legend = TRUE) + 
+  geom_abline(lty = 2, color = "gray80", size = 1.1) +
+  scale_x_log10()+  
+  scale_y_log10()+
+  labs(title = "American University Men's academic record",
+       subtitle = "Number of degrees and length of studies",
+       x = "Length of studies",
+       y = "Number of degrees", 
+       color = "Nationality",
+       caption = "Based on 'American University Men in China' (1936)")
+
+
+fig6 <- ggplotly(p6)
+
+fig6
+
+```
+
+<br>
+The scatterplot highlights four main groups: 
+
+  * Individuals who complete their degree within a year (mainstream, standard) (datapoints on the line)
+  * Individuals (mostly Chinese) who earned two or more degrees within a single year (datapoints on the right side of the line) 
+  * Individuals (mostly Westerners) who obtained several degrees over a long period of study (datapoints in the top right hand corner) 
+  * Individuals who earned fewer degrees than expected in view of the length of studies  (datapoints at the bottom and bottom right side of the plot) 
+
+Let's compute the ratio: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 <- auc4 %>% 
+  mutate(dur_nDeg = round((length)/nDeg, 1))
+
+
+datatable(auc4 %>% 
+  select(Nationality, Name_eng, dur_nDeg, length, nDeg, Degree_source, Year_end) %>% 
+  arrange(desc(dur_nDeg), Name_eng))
+  
+```
+<br>
+After a quick inspection, we can safely assume that a ratio superior to 8 referred to discontinuous studies or the granting of some honorary degrees, especially when the length of study exceeded 10 years. 
+
+In order to facilitate further interpretation, we categorize the duration of study into four main classes: 
+
+  * individuals who stayed only for one year
+  * individuals who stayed between 2 and 5 years (regular academic curricula) 
+  * individuals who stayed between 6 to 10 years (usually to pursue postgraduate work)
+  * individuals who stayed for 10 years or more (interrupted studies or honorary degrees)
+
+  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 <- auc4 %>% mutate(length_fct=cut(length, breaks=c(0, 2, 6, 10, 50), include.lowest = TRUE))  %>%
+  mutate(length_fct = fct_recode(length_fct, "Less than 2 years" = "[0,2]",
+                             "Between 2 and 6 years" = "(2,6]",
+                             "Between 6 and 10 years" = "(6,10]",
+                              "10 years or more" = "(10,50]"))
+
+auc4_dur_count <- auc4 %>% 
+  drop_na(length_fct)  %>% 
+  group_by(length_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nlgth= n, ptglgth = ptg)
+
+
+auc4_dur_count
+
+```
+
+<br>
+We also classify the number of curricula/degrees into three main groups: students who earned two degrees, less than two, and more than two (up to 6): 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 <- auc4 %>% mutate(nDeg_fct = cut(nDeg, breaks=c(0, 1, 2, 6), include.lowest = TRUE))%>%
+  mutate(nDeg_fct = fct_recode(nDeg_fct, "One degree" = "[0,1]",
+                             "2 degrees" = "(1,2]",
+                             "More than 2" = "(2,6]"))
+
+auc4_dur_count <- auc4 %>% 
+  drop_na(nDeg_fct)  %>% 
+  group_by(nDeg_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nDeg= n, ptgnDeg = ptg)
+
+
+auc4_dur_count %>% 
+  arrange(nDeg_fct)
+
+```
+<br>
+
+Finally, we dichotomize the ratio between the number of curricula/length of studies: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 <- auc4 %>% mutate(ratio_fct = cut(dur_nDeg, breaks=c(0, 8, 20), include.lowest = TRUE))
+
+auc4_dur_count <- auc4 %>% 
+  drop_na(ratio_fct)  %>% 
+  group_by(ratio_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))
+
+
+auc4_dur_count %>%
+  arrange(desc(n))
+
+```
+<br>
+These new variables will be useful for multivariate analyses. 
+
+Let's plot the length of study based on the new categories: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p7 <- auc4 %>% 
+  drop_na(length_fct) %>%
+  group_by(length_fct, Nationality) %>% 
+  count() %>%
+  ggplot(aes(x=length_fct, y=n, fill = Nationality)) +
+  geom_col(alpha = 0.8) +
+  labs(title = "American University Men's academic record: Length of study", 
+       subtitle = "Length of studies (thresholds)",
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig7 <- ggplotly(p7)
+
+fig7
+
+```
+
+
+<br>
+Length of study for each national group: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4_dur_zh_count <- auc4 %>% 
+  filter(Nationality =="Chinese")%>% 
+  drop_na(length_fct)  %>% 
+  group_by(length_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nzh= n, ptgzh = ptg)
+
+auc4_dur_west_count <- auc4 %>% 
+  filter(Nationality =="Western")%>% 
+  drop_na(length_fct)  %>% 
+  group_by(length_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(nwest= n, ptgwest = ptg)
+
+auc4_dur_jap_count <- auc4 %>% 
+  filter(Nationality =="Japanese")%>% 
+  drop_na(length_fct)  %>% 
+  group_by(length_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(njap= n, ptgjap = ptg)
+
+auc_dur_count  <- full_join(auc4_dur_zh_count, auc4_dur_west_count)
+auc_dur_count  <- full_join(auc_dur_count, auc4_dur_jap_count)
+
+auc_dur_count %>%
+  arrange(desc(nzh))
+
+
+```
+<br> 
+Chinese students stayed in the United States for a shorter period of time than Westerners. 87% studied for less than 6 years, among which 42% between 2 and 6 years, and 45% for less than 2 years. Only 5% studied for more than 10 years, but they may included honorary degrees or interrupted course of study. By contrast, 25% Westerners studied for more than 10 years, 24% between 2 and 6 years, and 46% stayed for less than 2 years. 
+
+
+We can also plot the ratio Degree/length: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p8 <- auc4 %>% 
+  drop_na(ratio_fct) %>%
+  group_by(ratio_fct, Nationality) %>% 
+  count() %>%
+  ggplot(aes(x=ratio_fct, y=n, fill = Nationality)) +
+  geom_col(alpha = 0.8) +
+  labs(title = "American University Men's academic record", 
+       subtitle = "Number of degrees and length of study (thresholds)",
+       x = "Degree/Length",
+       y = "Number of individuals", 
+       fill = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig8 <- ggplotly(p8)
+
+fig8
+
+```
+<br>
+Irregular curricula represented just 3% (19 individuals): 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+
+auc4_ratio_count <- auc4 %>% 
+  drop_na(ratio_fct)  %>% 
+  group_by(ratio_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nratio = n, ptg_ratio = ptg)
+
+auc4_ratio_count %>%
+  arrange(desc(nratio))
+
+```
+
+<br>
+Most abnormal curricula involved Western graduates (93%):
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4_ratio_zh_count <- auc4 %>% 
+  filter(Nationality =="Chinese")%>% 
+  drop_na(ratio_fct)  %>% 
+  group_by(ratio_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nzh= n, ptgzh = ptg)
+
+auc4_ratio_west_count <- auc4 %>% 
+  filter(Nationality =="Western")%>% 
+  drop_na(ratio_fct)  %>% 
+  group_by(ratio_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(nwest= n, ptgwest = ptg)
+
+auc4_ratio_jap_count <- auc4 %>% 
+  filter(Nationality =="Japanese")%>% 
+  drop_na(ratio_fct)  %>% 
+  group_by(ratio_fct) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(njap= n, ptgjap = ptg)
+
+auc_ratio_count  <- full_join(auc4_ratio_zh_count, auc4_ratio_west_count)
+auc_ratio_count  <- full_join(auc_ratio_count, auc4_ratio_jap_count)
+
+auc_ratio_count %>%
+  arrange(desc(nzh))
+
+
+```
+<br>
+Sequence analysis will be used later to analyze and compare more systematically individuals' educational trajectory and to model the temporal pattern of study in the entire population. 
+
+# Periodization
+
+When did they study? 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p9 <- auc4 %>% 
+  drop_na(Year_start) %>%
+  ggplot(aes(x=Year_start, fill = Nationality)) +
+  geom_histogram() +
+  scale_x_continuous(breaks = integer_breaks())+ 
+  labs(title = "American University Men in China", 
+       subtitle = "Period of study", 
+       x = "Year",
+       y = "Number of curricula", 
+       fill = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig9 <- ggplotly(p9)
+
+fig9
+
+```
+<br>
+There were very few students in the late 19th century, and they were all Westerners. Studies in the United States began to rise in the early years of the 20th century. The first Chinese student appeared in 1902. The movement took off after 1905 and peaked in the 1920, with an increasing number of Chinese.  
+
+The two Chinese pioneers were Rong Jinhuai 容觐槐 - alias Barlett Yung - and Kuang Fuzhuo 鄺富灼 (Fong Sec). The former was the son of Rong Hong 容閎 - Yung Wing (1828-1912), known as the first Chinese to receive a degree from an American University (Yale, 1854): 
+```{r warning=FALSE, message=FALSE}
+auc4 %>% filter(Nationality == "Chinese") %>% 
+  drop_na(Degree_source) %>%
+  filter(Year_start<1909)%>%
+  select(Nationality, Name_eng, Name_zh, Year_start, Degree_source, University)  %>%
+  arrange(Year_start)
+```
+
+<br>
+
+## Nationality 
+
+How did the period of study vary between national groups? 
+
+The histograms below reflect both a generational effect and the increasing attraction among young Chinese elites towards the United States as the major educational destination after the abolition of the imperial examination (1905) and the first remission of the Boxer Indemnity (1909) (Hunt, 1972). The declining trend in the final years (early 1930s) essentially reflects the lag between graduation and membership in the AUC upon their return in China: 
+
+```{r warning=FALSE, message=FALSE}
+
+
+p10 <- auc4 %>%
+  drop_na(Year_start)%>%
+  ggplot(aes(x=Year_start, fill = Nationality)) +
+  geom_histogram(show.legend = FALSE) +
+  scale_y_continuous(breaks = integer_breaks())+
+  facet_wrap(~Nationality, nrow = 3, scale = "free_y")+
+  labs(title = "American University Men in China", 
+       subtitle = "Formative years: A comparative periodization",
+       x = "Year",
+       y = "Number of curricula",
+       caption = "Based on 'American University Men in China' (1936)") 
+
+fig10 <- ggplotly(p10) 
+
+fig10 %>% hide_legend()
+
+
+```
+
+<br>
+Western members presented a wider timescope, spanning from 1883 to 1935 (median 1917). Chinese members were educated between 1902 and 1935 (median 1902). As a reflection of their statistical minority, Japanese members' studies took place in a later and narrower window, starting in 1906 and ending in 1925 (median 1921): 
+
+```{r warning=FALSE, message=FALSE}
+p11 <- auc4  %>% drop_na(Year_start) %>%
+  ggplot(aes(reorder(Nationality, Year_start), Year_start, fill = Nationality)) +
+  geom_boxplot(alpha = 0.4, show.legend = FALSE) +
+  coord_flip()+
+  labs(x = NULL, y = "Year")+  
+  labs(title = "American University Men in China: Comparative Periodization", 
+       caption = "Based on 'American University Men in China' (1936)") 
+
+fig11 <- ggplotly(p11)
+
+fig11 %>% hide_legend()
+```
+
+
+<br>
+Let's focus on the Chinese students:
+
+```{r warning=FALSE, message=FALSE}
+
+p12 <- auc4 %>% filter(Nationality == "Chinese") %>% 
+  ggplot(aes(x=Year_start)) +
+  geom_histogram() +
+  labs(title = "American University Men in China (Chinese): Period of study", 
+       subtitle = "Periodization",
+       x = "Year",
+       y = "Number of curricula",
+       caption = "Based on 'American University Men in China' (1936)") 
+
+fig12 <- ggplotly(p12)
+
+fig12
+
+```
+<br> 
+The two record years are 1918, with 43 curricula, and 1926, with 33 curricula. 
+
+Based on the histograms and our knowledge of the historical context, we can define three major periods: 
+
+  1. **1883-1908**: the first period corresponds to the late years of the Qing empire, preceding the first remission of the Boxer Indemnity (1908-9). It was a phase of political instability characterized by multiple reforms and attempts at reorganizing the educational system. During this early phase, three major episodes had an decisive impact on the movement to study abroad (1) the Chinese Educational Mission (CEM) (1872-1881) was the first official program to send students in the United States in order to acquire technical training to "modernize" China. These pioneering students, however, were recalled before they could accomplish their mission, on account of their alleged moral depravation and the disagreement between their sponsor (Rong Hong) and the imperial administration. After the aborted experience of the CEM, students in the United States became scarce. Most of them were self-supporting or sponsored by missionary institutions. (2) After the Russo-Japanese war (1894-1895), Japan became the primary destination for Chinese students abroad. Comparatively few students went to the United States during this period. Geographical and cultural proximity, ease to travel and lower expenses largely accounted for this choice. (3) After the abolition of the imperial examination system (1905), study abroad became not just an attractive option for wealthy elites, but a prerequisite for official appointment. 
+  2. **1909-1918**: the second phase opened with the remission of the Boxer Indemnity by the American government (1908-9) (Hunt, 1972). As a result, the United states emerged as a first-choice destination for Chinese students abroad. Hundreds of Chinese left every year, not only under government sponsorship but also and more importantly, as self-supporting students. They were more advanced in age and better prepared than their precedessors. Tsinghua (Qinghua) college was established in 1909 with the specific propose of preparing Boxer indemnity students to study in the United States. The founding of the Republic in 1911 opened alternative career paths in the newly established Republican institutions and its multifarious modernizing projects, especially for students in law and political sciences (Gale, 1936: 63).
+  3. **1919-1936**: WWI was a major turning point for three main reasons: (1) the United States rose as the new global power and eclipsed other countries as the most attractive destination for Chinese elites seeking foreign education. (2) The returned students in China began to organize as an autonomous group through alumni and students' associations. In parallel, American expatriates established their own clubs which they opened to Chinese members, such as the Rotary Club (in contrast to earlier, more restrictive foreign clubs) (Armand, 2022). These organizations were crucial in disseminating American values, promoting American interests among Chinese elites, and strengthening the ties among the American educated in China. They eventually contributed to the emergence of the first global elite in pre-1949 China. (3) In 1924, the second remission of the Boxer indemnity led to the creation of the China Foundation for the Promotion of Education and Culture (CFPEC) (Zhonghua kexue xiejin hui) which aimed to foster Sino-American cultural exchanges. These institutions and programs created a solid infrastructure and provided the ground for growing waves of students being sent continuously to the United States until the early 1950s. Since the new educational system in China was largely patterned after the American system, students were better prepared and received a better assistance in the United States. After 1927, the newly established Nationalist regime attempted to reinforce its control over students abroad. As previous education in China became a prerequisite for government scholarship, more advanced students were sent for postgraduate work. Moreover, the Ministry of Education increasingly emphasized technology and technical training. It remains difficult, however, to assess whether/to what extent the regime managed to implement its educational policy. 
+  
+Other periodizations are possible. We could choose 1905 as the dividing year to emphasize the rupture with the imperial system of elite selection. Alternatively, 1911, 1916 and 1927 would reflect more faithfully the political history of China. The periodization we propose, however, appears better suited to the history of the American returned students in general, and to our sample population in particular.
+  
+Based on this customized periodization, we can create a new variable "period" subdivided into three sub-periods in order to facilitate further interpretation. We use the starting year as the basis for periodizing individuals' curriculum: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 <- auc4 %>% mutate(period=cut(start, breaks=c(0, 1908, 1918, 1936), 
+                                   include.lowest = TRUE)) %>%
+  mutate(period = fct_recode(period, "1883-1908" = "[0,1.91e+03]",
+                             "1909-1918" = "(1.91e+03,1.92e+03]",
+                             "1919-1935" = "(1.92e+03,1.94e+03]"))
+
+highest <- highest %>% mutate(period=cut(start, breaks=c(0, 1908, 1918, 1936), 
+                                   include.lowest = TRUE)) %>%
+  mutate(period = fct_recode(period, "1883-1908" = "[0,1.91e+03]",
+                             "1909-1918" = "(1.91e+03,1.92e+03]",
+                             "1919-1935" = "(1.92e+03,1.94e+03]"))
+
+```
+<br>
+
+We can then compute the proportion of each period within each national group:
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% distinct(Nationality, Name_eng, period)%>%
+  drop_na(period)%>% 
+  group_by(period, Nationality) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period)
+
+
+auc4 %>% distinct(Nationality, Name_eng, period)%>%
+  drop_na(period)%>% 
+  group_by(Nationality, period) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) 
+
+auc4_period_zh_count <- auc4 %>% 
+  filter(Nationality =="Chinese")%>% 
+  distinct(Name_eng, period)%>%
+  drop_na(period)  %>% 
+  group_by(period) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))%>% 
+  rename(nzh= n, ptgzh = ptg)
+
+auc4_period_west_count <- auc4 %>% 
+  filter(Nationality =="Western")%>% 
+  distinct(Name_eng, period)%>%
+  drop_na(period)  %>% 
+  group_by(period) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(nwest= n, ptgwest = ptg)
+
+auc4_period_jap_count <- auc4 %>% 
+  filter(Nationality =="Japanese")%>% 
+  distinct(Name_eng, period)%>%
+  drop_na(period)  %>% 
+  group_by(period) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>% 
+  rename(njap= n, ptgjap = ptg)
+
+auc_period_count  <- full_join(auc4_period_zh_count, auc4_period_west_count)
+auc_period_count  <- full_join(auc_period_count, auc4_period_jap_count)
+
+auc_period_count %>%
+  arrange(period, desc(nzh))
+
+```
+<br>
+Chinese students steadily grew in number and proportion over time, rising from just 2% before 1909 (5), to 34% (79) between 1909 and 1918, and finally, 64% (147) during the last phase (1919-35). 
+
+
+We can also compute the proportion of each period within each national group:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% distinct(Nationality, Name_eng, period)%>%
+  drop_na(period)%>% 
+  group_by(period, Nationality) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+
+```
+<br>
+While Chinese students represented just 10% in the early years (compared to 90% Westerners, and no Japanese), they became the majority during the second phase (54%, compared to 45% Westerners and 1% Japanese) and clearly dominated in the last phase (67% compared to 33% Westerners and 1% Japanese)
+
+We can plot the national distribution for each period: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p13 <- auc4 %>% 
+  drop_na(period) %>%
+  group_by(period, Nationality) %>% 
+  count() %>%
+  ggplot(aes(x=period, y=n, fill = Nationality)) +
+  geom_col(alpha = 0.8) +
+  labs(title = "American University Men in China: Comparative periodization", 
+       x = "Period of study",
+       y = "Number of individuals", 
+       fill = "Nationality", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig13 <- ggplotly(p13)
+
+fig13
+
+```
+
+<br> 
+
+## Length over time
+
+How did the length of study evolve over time? For this particular question, we will focus on Chinese students. Did the period of staying decrease over time, especially during the Nanjing regime, as former education in Chinese colleges became a prerequisite for study abroad, and as more advanced students were increasingly sent for postgraduate work? 
+
+```{r warning=FALSE, message=FALSE}
+p13a <- auc4  %>% 
+  drop_na(period) %>% 
+  drop_na(length) %>%
+  filter(Nationality == "Chinese") %>%
+  ggplot(aes(period, length, fill = period)) +
+  geom_boxplot(alpha = 0.4, show.legend = FALSE) +
+  labs(x = "Period", y = "Length (years)")+  
+  labs(title = "American University Men in China (Chinese): Periodizing length of study", 
+       caption = "Based on 'American University Men in China' (1936)") 
+
+fig13a <- ggplotly(p13a)
+
+fig13a %>% hide_legend()
+```
+
+
+<br>
+Indeed, the length of study gradually decreased over time especially after WWI. The median length dropped from 4 to 3 years between the first and the second phase. Students who stayed for more than ten years became the exception during the last phase. 
+
+# Degree
+
+What level of education did they reach? What degree did they earn? 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p14 <- auc4 %>% 
+  drop_na(Degree_level) %>%
+  group_by(Degree_level) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Degree_level, n), y =n)) +
+  geom_col() +
+  labs(title = "American University Men in China", 
+       subtitle = "Graduation level", 
+       x = "Degree",
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig14 <- ggplotly(p14)
+
+fig14
+
+```
+
+<br>
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 %>% group_by(Degree_level) %>% 
+  drop_na(Degree_level) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n))
+  
+  
+```
+<br>
+Unsurprisingly, the number of graduates decreased as the level of degree increased. The higher the degree, the fewer the graduates. Bachelor represented the majority (294, 57% of all curricula). Master's degrees accounted for 21% (111). There were 96 doctorates (18%). Certificates referred to more specialized degrees, mainly in engineering (13, 2%). Six degrees (mostly in engineering as well) remained undetermined. Moreover, we have no information on 166 curricula (24%). 
+
+<br>
+
+## Nationality 
+
+How did the level of education vary between national groups?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p14a <- auc4 %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Nationality) %>%
+  group_by(Degree_level, Nationality) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Degree_level, n), y =n, fill = Nationality)) +
+  geom_col() +
+  facet_wrap(~Nationality, nrow = 3, scale = "free_y")+
+  labs(title = "American University Men in China", 
+       subtitle = "Graduation level", 
+       x = "Degree",
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig14a <- ggplotly(p14a) %>% hide_legend()
+
+fig14a
+
+```
+
+<br>
+Proportion of degrees in each national group:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Nationality) %>%
+  group_by(Nationality, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+
+```
+<br>
+Chinese graduates reflected the general trend. Bachelors represented almost half of all degrees earned by Chinese students (144, 47%). Master accounted for 30% (90) and doctorates for 20% (62). Certified engineers represented just 2% (6 certificates). The proportion of bachelors was higher among Western graduates (70%, 147) and Japanese graduates (60%, 3). Mechanically, there were proportionately fewer masters (21, 10%) and doctorates among Westerners (33, 13%). Certified engineers (7, 3%) were roughly at par with their Chinese counterparts. There was no master's graduates among Japanese students. 
+
+Overall, Chinese graduates obtained higher degrees than foreigners. Indeed, Chinese doctorates represented 62% of all doctorates, 81% of Master's, and just 49% of bachelor's degrees: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc %>% 
+  drop_na(Degree_level) %>%
+  drop_na(Nationality) %>%
+  group_by(Degree_level, Nationality) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Degree_level, desc(n))
+
+
+```
+
+<br>
+Based on these findings, we are forced to nuance Wang's general assumption about the poor academic standards of Chinese students abroad (Wang, 1966, p.164-168). As far as our population of American University Men is concerned, at least, the returned students' academic achievements appeared far better than previously assumed.  
+
+## Highest degree
+
+Let's focus on the highest degree obtained by each individual: 
+
+First, we load the dataset containing the highest degree obtained by each individual (highest_unique). The method for selecting the highest degrees is described in the appendix: 
+
+
+```{r warning=FALSE, message=FALSE}
+
+library(readr)
+highest_uniq <- read_delim("Data/highest_uniq.csv",
+";", escape_double = FALSE, trim_ws = TRUE)
+
+
+```
+
+Based on this simplified data, we re-compute the proportion of degrees for each national group: 
+
+```{r warning=FALSE, message=FALSE}
+highest_uniq %>% 
+  drop_na(Degree_level) %>% 
+  drop_na(Nationality) %>%
+  group_by(Nationality, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+```
+<br>
+Master's degrees (70, 38%) ranked higher than bachelor's (58, 31%) among Chinese graduates. Earning a bachelor's degree was a prerequisite for enrolling in master's programs. The proportion of doctorates also increased (51, 31%), which suggests that some master's degrees in the previous data transferred to doctorates. The proportion of certificates remained unchanged (6, 3%). Engineering certificates constituted specific programs that followed their own course. There was no missing values, meaning that undetermined curricula generally referred to lower degrees. 
+
+By contrast, bachelor's degrees still represented the majority among Westerners (64%), but masters and doctorates progressed slightly (11% and 19%, respectively). Certificates had also increased from 3 to 5%. Bachelors and doctorates were equally distributed among Japanese graduates (33%, 1 each), plus one remained undetermined. 
+
+When we focus on the highest degrees, the proportion of Chinese doctors increased (68%, compared to 65%). Bachelors decreased (42%, compared to 49%) and masters remained unchanged (81%): 
+
+```{r warning=FALSE, message=FALSE}
+
+highest %>%   
+  drop_na(Degree_level) %>%
+  drop_na(Nationality) %>%
+  group_by(Degree_level, Nationality) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Degree_level, desc(n))
+
+
+```
+<br>
+These figures support our previous observations that Chinese graduates generally reached a higher level of education than their non-Chinese counterparts, at least among the sample population of "American University Men". 
+
+
+## Degree over time
+
+Did the level of education increase over time?  
+
+We plot the distribution of degrees for each period: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p15a <- auc4 %>% 
+  drop_na(Degree_level) %>%
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  count()%>%
+  ggplot(aes(x=period, y =n, fill = Degree_level)) +
+  geom_col() +
+  labs(title = "American University Men in China: Level of education", 
+       subtitle = "Level of education over time", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "Degree",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig15a <- ggplotly(p15a) 
+
+fig15a
+
+```
+<br>
+All degrees: 
+
+```{r warning=FALSE, message=FALSE}
+auc4 %>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+<br>
+The proportion of bachelor's degree remained stable and even slightly increased between the first and the second phase (61% to 62%) but thereafter steadily decreased as higher degrees progressed over time. Bachelors significantly declined after WWI (52%). Master's degrees enjoyed a remarkable growth, rising from just 9% before 1909 to 18% during the second phase and 28% after WWI. Certificates experienced a peak during the second phase (5%), compared to 3% before 1909 and 1% after WWI. This reflects the  relative popularity of engineering programs during the late Qing-early years of the Republic.
+
+
+<br> 
+Did the level of education equally increase in the three national groups? 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p15b <- auc4 %>% 
+  drop_na(Degree_level) %>%
+  drop_na(period) %>%
+  group_by(period, Degree_level, Nationality) %>%
+  count()%>%
+  ggplot(aes(x=period, y =n, fill = Degree_level)) +
+  geom_col() +
+  facet_wrap(~Nationality, nrow = 3, scale = "free_y")+
+  labs(title = "American University Men in China: Level of education", 
+       subtitle = "Level over time", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "Degree",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig15b <- ggplotly(p15b) 
+
+fig15b
+
+```
+
+<br>
+Let's focus on the Chinese graduates and compare their standards with other national groups: 
+
+```{r warning=FALSE, message=FALSE}
+auc4 %>% 
+  filter(Nationality == "Chinese")%>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+<br>
+Chinese students largely accounted for the general progress of intermediate (master) degrees. Master's degrees indeed enjoyed the most significant growth among Chinese graduates, rising from just two (20%) before 1909 to 26 (22%) during the second phase and 61 (34%) after WWI. Meanwhile, bachelors declined from 50% (5) to 44% (79) during the last phase, with a short increase during the second period, reflecting the sudden "massification" of studies in the United States after the Boxer Indemnity Program was launched. Doctorates decreased in proportion (from 30% to 21% and finally 19%) but increased in number (from 3 to 24 and 34). The majority of special certificates were delivered during the second phase (5), compared to none before 1909 and just 1 after 1918.
+
+Western graduates presented a different picture: 
+
+```{r warning=FALSE, message=FALSE}
+auc4 %>% 
+  filter(Nationality == "Western")%>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+<br>
+The main difference was the increase of bachelors during the first and second phase (from 63% to 75%) before eventually stabilizing around 71%. Doctorates reached a peak before 1909 (15, 25%). They fell to 9% during the second phase but increased again after WWI (10, 14%). By contrast, certificates peaked during the second phase (5%). Master's degrees slightly progressed from 7% to 11% and finally 12%.
+
+As we saw earlier, bachelors dominated among Japanese graduates, competing only with undetermined degrees during the second phase: 
+
+```{r warning=FALSE, message=FALSE}
+auc4 %>% 
+  filter(Nationality == "Japanese")%>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+
+<br>
+Moreover, the increase of masters' graduates is even more salient when we focus on the highest degrees obtained (from 12% to 21% and 33%): 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq %>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+
+<br>
+Focusing on the highest degrees also has the effect of smoothing over the declining trend of other degrees. We notice that bachelors rose between the first and the second phase (from 41% to 50%) and finally stabilized around 43% after WWI. On the opposite, doctorates dropped gradually from 38% to 21% and 22%. 
+
+<br>
+Let's focus on the highest degrees earned by Chinese students: 
+
+```{r warning=FALSE, message=FALSE}
+highest_uniq %>% 
+  filter(Nationality == "Chinese")%>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+<br>
+Among Chinese students' highest degrees, doctorates dominated during the first phase (2, 50%), while bachelor's and master's degrees stood at par (1, 25% each). Bachelors ranked first during the second period (22, 34%) while masters and doctorates stood at par. Masters dominated during the last phase (43%) followed by bachelors (30%) and doctorates (25%). As lower degrees progressed from 1909 onward, doctorates were relegated to the third position. To conclude, the "massification" of students in the United States resulted in an increase in intermediate degrees (master).  
+
+<br>
+Western graduates again presented a different profile: 
+
+```{r warning=FALSE, message=FALSE}
+highest_uniq %>% 
+  filter(Nationality == "Western")%>% 
+  drop_na(Degree_level) %>% 
+  drop_na(period) %>%
+  group_by(period, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+```
+<br> 
+Bachelors continuously dominated and even progressed during the second phase (from 43% to 72%) at the expense of higher degrees. Masters and doctorates declined, especially the latter during the second phase (10% to 9% and 37% to 11%, respectively), but returned to higher figures after WWI (12% and 14%, respectively). In contrast with Chinese returned students, the "massification" of college education among Westerners resulted in lowering the general level of graduation. 
+
+In conclusion, the growing population of graduates tended to neutralize the general increase in the level of education. As higher education became more accessible to a greater number of students, it seemed that the mainstream sought to graduate quickly in order to find a job as soon as possible. Most of them contended with bachelors' degrees, though an increasing number earned a master's degree after 1909. Only a minority willing to pursue an academic career or to specialize in professional fields such as law and medicine, went further the master's level. 
+
+How did the degrees relate the field of study? Did some fields of study require or lead to higher levels of qualification? 
+
+# Field of study
+
+What major did they choose? In which field did they specialize? 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p16 <- auc4 %>% 
+  drop_na(Field_main) %>%
+  group_by(Field_main) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n)) +
+  geom_col() +
+  coord_flip()+
+  labs(title = "American University Men in China: Field of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig16 <- ggplotly(p16)
+
+fig16
+
+```
+
+<br>
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 %>% group_by(Field_main) %>% 
+  drop_na(Field_main) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n))
+  
+  
+```
+<br> 
+Humanities represented the largest share (168 curricula, almost one third). Sciences amounted for 26% (137 curricula). Other fields represented less than 10% each: medicine, business, engineering and law amounted for 8% each (about 40 curricula). Degrees in theology represented 3%, architecture and education, just 1% each. 24 degrees remained undetermined (5%). 
+
+If we focus on the highest degree, the share of humanities graduates decreased to 24% (77 degrees): 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p16b <- highest_uniq %>% 
+  drop_na(Field_main) %>%
+  group_by(Field_main) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n)) +
+  geom_col() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Field of study", 
+       subtitle = "Field of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig16b <- ggplotly(p16b) %>% hide_legend()
+
+fig16b
+
+```
+<br>
+ 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+highest_uniq %>% group_by(Field_main) %>% 
+  drop_na(Field_main) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n))
+  
+  
+```
+
+<br> 
+This reveals that many students first earned a B.A. or a M.A. before specializing in business (11%), medicine (10%), engineering (10%) or law (9%). Fewer students chose theology (2%) and architecture (1%). The proportion of sciences graduates remained unchanged, which suggests that specialization in these fields began earlier during bachelor's years.
+
+
+## Nationality
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p16a <- auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%  
+  filter(!Nationality == "Japanese")%>%
+  group_by(Field_main, Nationality) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n, fill = Nationality)) +
+  geom_col() +
+  coord_flip()+
+  facet_wrap(~Nationality, scale = "free_y")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Field of study", 
+       subtitle = "Field of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig16a <- ggplotly(p16a) %>% hide_legend()
+
+fig16a
+
+```
+
+
+<br>
+As the plots reveal, Western graduates were more likely to specialize in the humanities than their Chinese counterparts. Japanese graduates (not represented on the plot) also showed a stronger attraction for law, but there were too few individuals to draw general conclusions on their educational choices.   
+
+<br>
+Field of study in each national group:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%
+  group_by(Nationality, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+
+```
+<br> 
+The above table confirms that sciences dominated among Chinese graduates (27%), followed by humanities (26%). Business, medicine and engineering each attracted at least 10% of Chinese graduates. Other fields remained a minority. 7% of the Chinese students graduated from law schools, 2% in architecture (6), three in education, and none in theology. 6% (18) degrees remained undetermined.
+
+Westerners again presented a different profile. Humanities was their favorite choice (42%). Sciences ranked second (26%). Other fields amounted for less than 10%. Law and theology each attracted 8% of Western graduates, medicine 6%, engineering 5%, and business only 2%. 3% remained undetermined.
+
+Japanese degrees were distributed between law and the humanities (2 each), plus one engineer. 
+
+Let's examine the proportion of national groups in each field:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%
+  group_by(Field_main, Nationality) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n))
+
+
+```
+<br> 
+There were no foreigners among American-trained architects and educators. Chinese graduates dominated in both fields. They represented 90% of all graduates in business, 71% in engineering, 70% in medicine, 61% in sciences and 52% in law. Westerners prevailed in other fields, especially theology (100%) and the humanities (52%). 
+
+Let's now focus on the highest degrees: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p16c <- highest_uniq %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%  
+  filter(!Nationality == "Japanese")%>%
+  group_by(Field_main, Nationality) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n, fill = Nationality)) +
+  geom_col() +
+  coord_flip() +
+  facet_wrap(~Nationality, scale = "free_y")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Field of study", 
+       subtitle = "Field of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig16c <- ggplotly(p16c) %>% hide_legend()
+
+fig16c
+
+```
+
+<br>
+The detailed distribution of highest degrees in each national group was as follows:
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%
+  group_by(Nationality, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+
+```
+<br>
+Among Chinese highest degrees, as expected, the share of specialized fields such as business (18%, compared to 12% in all degrees), medicine (12% compared to 10%) and engineering (11% compared to 10%) increased at the expense of more general programs, especially the humanities (17% compared to 26%) and to a lesser extent, sciences (24% instead of 27%). Law decreased from 7% to 6%. The position of architecture remained unchanged.
+
+Humanities graduates also decreased among Westerners (33% compared to 42%), but increased in sciences (28% compared to 26%). Like their Chinese fellows, the proportion of graduates in law (11% instead of 8%), engineering (8% instead of 5%) and medicine (8% compared to 6%) progressed as the level increased. 
+
+To conclude, Chinese students tended to specialize in professional fields such as business, medicine and engineering, whereas Westerners were more inclined toward sciences, law and theology. Medicine was a popular field in the two populations, especially among Chinese students. This supports previous findings that highlighted a shift toward more practical training during the Republic, especially during the Nanjing decade (Wang, 1966, p. 168-174). 
+
+Proportion of national groups in each field (highest degree):
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq %>% 
+  drop_na(Field_main) %>%
+  drop_na(Nationality) %>%
+  group_by(Field_main, Nationality) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality)
+
+
+```
+
+<br> 
+This pattern of specialization is even more striking if we focus on the highest degrees only. Chinese graduates represented 92% of all degrees in business, 70% in medicine, 62% in engineering, 55% in sciences but only 41% in law and 12% in theology. Westerners dominated in the humanities (57%) and law (52%). 
+
+## Degree
+
+What level did they reach in their respective field of study? Did some disciplines required higher levels of qualification? 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p17a <- auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>% 
+  mutate(Degree_level = fct_relevel(Degree_level, 
+            "Bachelor","Master","Doctorate","Certificate","Undetermined")) %>%
+  filter(Field_main != "Undetermined") %>% 
+  filter(Degree_level != "Undetermined") %>% 
+  group_by(Field_main, Degree_level) %>%
+  count()%>%
+  ggplot(aes(x=Degree_level, y =n, fill = Field_main)) +
+  geom_col() +
+  facet_wrap(~Field_main, nrow = 3, scale = "free_y")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Degree & Field of study", 
+       x = NULL,
+       y = "Number of degrees", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig17a <- ggplotly(p17a) %>% hide_legend()
+
+fig17a
+
+```
+
+<br> 
+Bachelor's degrees dominated in the Humanities, Sciences, Education, Law and Architecture. Master's degrees dominated in business and engineering. Doctorates were more frequent in professional fields such as law and medicine, as well as theology. 
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>%
+  group_by(Field_main, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n))
+
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p17b <- auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>%
+  group_by(Field_main, Degree_level) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n, fill = Degree_level)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Field of study & Degree", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig17b <- ggplotly(p17b)  
+
+fig17b
+
+```
+
+<br>
+The distribution between fields of study for each level: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>%
+  group_by(Degree_level, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Degree_level, desc(n))
+
+
+```
+<br>
+The majority of bachelors' degrees were granted in the humanities (152, 52%). They approximated one third of all degrees in sciences (94, 32%). Specialized fields represented less than 10% of bachelors' degree each. Certificates were specific to engineering studies (92%). Most doctors specialized in medicine (42%) and to a lesser extent law (19%) and theology (10%). 24% referred to PhD with no further specification. Sciences dominated among master's degrees (37%), followed by business (26%), engineering (16%) and the humanities (14%). A few lawyers and medical students did not go beyond the master's level (3% and 2% respectively). The majority of undetermined degrees went to engineers (50%) and educators (33%). 
+
+Let's focus on Chinese graduates: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p18a <- auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>% 
+  mutate(Degree_level = fct_relevel(Degree_level, 
+            "Bachelor","Master","Doctorate","Certificate","Undetermined")) %>%
+  filter(Field_main != "Undetermined") %>% 
+  filter(Degree_level != "Undetermined") %>% 
+  filter(Nationality == "Chinese") %>%
+  group_by(Field_main, Degree_level) %>%
+  count()%>%
+  ggplot(aes(x=Degree_level, y =n, fill = Field_main)) +
+  geom_col() +
+  facet_wrap(~Field_main, nrow = 3, scale = "free_y")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men (Chinese): Degree & Field of study", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig18a <- ggplotly(p18a) %>% hide_legend()
+
+fig18a
+
+```
+
+<br>
+The distribution of degrees in each field was as follows:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>%
+  filter(Nationality == "Chinese") %>%
+  group_by(Field_main, Degree_level) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n))
+
+
+```
+
+<br>
+Among Chinese graduates, doctorates dominated in medicine (90%) and law (67%). They represented less than 10% in all other fields. The nature of doctorates remained undetermined in most cases (94%). Masters' degrees prevailed in business (70%), engineering (59%) and sciences (40%). There were less frequent in the humanities (13%), medicine (7%) and law (5%). Bachelors dominated in the humanities (87%),  architecture (83%) and sciences (59%). They represented one third of all Chinese degrees in education, 29% in law and 27% in business. 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p18b <- auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level) %>%
+  mutate(Degree_level = fct_relevel(Degree_level, 
+            "Bachelor","Master","Doctorate","Certificate","Undetermined")) %>% 
+  filter(Field_main != "Undetermined")   %>% 
+  filter(Degree_level != "Undetermined") %>%  
+  filter(Nationality == "Chinese") %>%
+  group_by(Field_main, Degree_level) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Field_main, n), y =n, fill = Degree_level)) +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men (Chinese): Field of study & Degree", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig18b <- ggplotly(p18b)
+
+fig18b
+
+```
+
+<br>
+Distribution of fields for each level: 
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_main) %>%
+  drop_na(Degree_level)  %>%
+  filter(Nationality == "Chinese") %>%
+  group_by(Degree_level, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Degree_level, desc(n))
+
+
+```
+
+<br>
+Most bachelors' degrees were obtained in the humanities (68, 47%) but the proportion was lower among Chinese graduates than in the entire population (52%). Over one third was earned in sciences (49, 34%) (compared to 32% among all graduates). Professional fields each represented less than 10% of all bachelors. Doctors specialized in medicine (44%), law (23%, compared to 19% among all graduates). There were only two doctors in engineering (3%), one in business and one in sciences (2% each). Sciences required lower degrees than liberal professions (37% of all masters). Business represented 29% of all masters and engineering 19%. Moreover, engineers had their own certification system (83%). 37% of all doctorates referred to PhD. with no further specification (compared to 24% in the entire population).
+
+If we compare with the entire population, sciences dominated among Master's degrees (37%), followed by business (26%), engineering (16%), humanities (14%), compared to 21%), engineering (16%, compared to 14%) and the humanities (8%, compared to 10%). Three lawyers, two medical doctors, one architect and one theologian did not go beyond the master's level. Undetermined degrees were to be found mostly in engineering (50%) and education (33). 
+
+## Subfields
+
+What subjects did they study more specifically?
+
+<br>
+Subfields of study (all nationalities):
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  drop_na(Field_2) %>%
+  group_by(Field_main, Field_2) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n))
+
+```
+<br>
+In the humanities, general subjects (arts) clearly prevailed (90%), followed by philosophy (8%, 13 degrees), letters, literature and rhetoric (1% each). General medicine dominated in the medical field (58%), before dental surgery (12 degrees, 28%), health physicist and medical sciences (5%) and rare specializations such as tropical and veterinary medicine (1 degree each). Most degrees in sciences referred to general sciences (99%), whereas applied sciences such as agriculture and forestry represented a minority (one each). Besides general engineering (61%), civil engineering was American University Men's favorite choice (22%), before electrical (12%), chemical and mechanical engineering (one each). Among business students, business administration was the most popular subject (71%), before commercial sciences (27%) and foreign service (one degree). Physical educators dominated in the field of education (three degrees). 
+
+Note that vague categories (e.g. legal science, health physicist, letters/literature) often reflected changes or inconsistencies in labeling academic programs from one university to the other and over time, rather than truly distinct academic disciplines.
+
+
+<br>
+Let's focus on Chinese graduates:
+
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>%
+  filter(Nationality == "Chinese") %>% 
+  drop_na(Field_2) %>%
+  group_by(Field_main, Field_2) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n))
+
+
+```
+<br> 
+In the humanities, general subjects (arts) clearly dominated (91%), followed by philosophy (6%, 5 degrees), letters and literature (1% each). 
+General medicine represented 60% of all degrees in the medical field (18 degrees), before dental surgery (6 degrees, 20%), other general degrees such as health physicist and medical sciences (2 degrees, 7% each), and rare specializations such as tropical and veterinary medicine (1 degree each). 
+Most scientific degrees in sciences referred to general sciences (98%), whereas applied sciences such as agriculture and forestry represented a minority (one each),  which supports previous findings (Wang, 1966, p. 168-174). 
+Besides general engineering (55%), civil engineering was the favorite choice of Chinese students (9 degrees, 31%), before electrical (3 degrees, 10%) and mechanical engineering (one degree, 3%). Among business students, business administration was the most popular subject (26 degrees, 70%), before commercial sciences (11, 30%). Physical educators dominated in the field of education (three degrees). 
+
+Overall, Chinese graduates largely accounted for the general trend in the entire population, except for their absence in chemical engineering and rhetoric. On the opposite, they dominated in physical education, architecture, applied sciences (agriculture, forestry) and very rare medical specializations (tropical, veterinary medicine). 
+
+## Field over time
+
+How did Chinese graduates' educational choices change over time? Do we observe a shift toward applied sciences and technology especially after 1928 (under the Nationalist regime)? 
+
+Fields of study over year: 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p20a <- auc4 %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined")%>%
+  drop_na(Year_start) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, Year_start)%>%
+  ggplot(aes(x=Year_start, fill = Field_main)) +
+  geom_histogram()+
+  labs(title = "American University Men in China: Field of study over time", 
+       subtitle = "Field of study over time", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig20a <- ggplotly(p20a) 
+
+fig20a
+
+```
+
+<br>
+Facets are easier to interpret: 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p20b <- auc4 %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined") %>%
+  drop_na(Year_start) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, Year_start)%>%
+  ggplot(aes(x=Year_start, fill = Field_main)) +
+  geom_histogram()+
+  scale_y_continuous(breaks = integer_breaks())+
+  facet_wrap(~Field_main, scales = "free_y", nrow = 4)+
+  labs(title = "American University Men in China: Field of study over time", 
+       subtitle = "Field of study over time", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = "Field",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig20b <- ggplotly(p20b) %>% hide_legend()
+
+fig20b
+
+```
+<br> 
+There was no obvious shift towards technical training, no clear pattern of specialization over time. Based on the histograms, we can define three main groups: 
+
+  * **disciplines that enjoyed a continuous popularity** (sciences, humanities, business and commerce). Sciences and the humanities had attracted Chinese students since the late years of the Qing empire (even before the abolition of the imperial examinations, in 1901 and 1904, respectively). Business sciences emerged later (1911) and gained popularity in the 1920s. 
+  * **early disciplines with a discontinuous trajectory**: professional and specialized fields that pre-existed the Republican period but gained prominence only during the Republic (engineering, medicine, law, theology). The first graduates in engineering appeared in 1910 but peaked after WWI and in 1925. Students in theology emerged in 1910 but peaked ten years later (1920). It was not until 1926 that law studies really took off among Chinese students in the United States.  
+  * **disciplines of most recent emergence (post WWI) with a discrete presence** (architecture, education). The first graduate in education appeared in 1918 and the first architect in 1923. 
+
+If we focus on the highest degrees, the picture appeared unchanged, except for the shorter timescope in the humanities:  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p20c <- highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined") %>%
+  drop_na(Year_start) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, Year_start)%>%
+  ggplot(aes(x=Year_start, fill = Field_main)) +
+  geom_histogram()+
+  scale_y_continuous(breaks = integer_breaks())+
+  facet_wrap(~Field_main, scales = "free_y", nrow = 4)+
+  labs(title = "American University Men in China: Field of study over time", 
+       subtitle = "Field of study over time", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = "Field",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig20c <- ggplotly(p20c) %>% hide_legend()
+
+fig20c
+
+```
+
+<br> 
+Periodization:
+```{r warning=FALSE, message=FALSE}
+
+auc4 %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined") %>%
+  drop_na(Field_main) %>%
+  drop_na(period) %>%
+  group_by(period, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+
+```
+<br>
+Prior to Boxer Indemnity Program, the humanities represented the majority (56%). The remaining degrees were equally distributed between Law and sciences (22% each). Chinese students' educational choices considerably broadened and diversified during the second and third phases. As a result, the share of the humanities gradually decreased to 34% between 1909 and 1918, and finally 21% after WWI. On the opposite, sciences grew to 29% during the second phase and 30% after WWI. Law degrees dropped to 6% and 7%. Among the new disciplines during the second phase, we find medicine and engineering representing 11% and 10% respectively, followed by business (8%) and education (only one degree). Business took the lead after WWI (17%), eclipsing medicine (11%), engineering (10%), law (7%), architecture (4%) and education (two degrees). Despite its later emergence, however, architecture immediately rose to 4% (seven degrees). 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p21 <- auc4 %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined") %>%
+  drop_na(period) %>%
+  drop_na(Field_main) %>%
+  group_by(period, Field_main)%>%
+  count()%>%
+  ggplot(aes(x=period, y =n, fill = Field_main)) +
+  geom_col() +
+  labs(title = "American University Men in China: Field of Study (Periodization)", 
+       subtitle = "Field of Study over time", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig21 <- ggplotly(p21) 
+
+fig21
+
+```
+<br>
+
+If we focus on highest degrees: 
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Field_main != "Undetermined") %>%
+  drop_na(Field_main) %>%
+  drop_na(period) %>%
+  group_by(period, Field_main) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+
+```
+<br> 
+No significant change occurred during the first period. During the second and third phases, the weight of specialized programs (medicine, engineering, business) increased at the expense of liberal education (humanities, sciences). This mostly reflects the fact that the students who earned their first degrees in liberal arts and sciences later specialized in one of these professional fields.  
+
+## Field and length of study 
+
+Did some specific field of study required longer period of training? 
+
+This analysis is based on the highest degrees obtained by each individual and focuses on the Chinese students only (232).
+
+We load the list of individuals with their highest degrees: 
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+highest_uniq <- read_delim("Data/highest_uniq.csv", 
+                           ";", escape_double = FALSE, col_types = cols(duration = col_number()), 
+                           trim_ws = TRUE)
+```
+<br>
+We append the actual length of study and we select the Chinese students: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_length_nohon <- auc_length %>% select(Name_eng, length)
+highest_uniq <- inner_join(highest_uniq, auc_length_nohon)
+
+
+high_uniq_zh <- highest_uniq %>% 
+  filter(Nationality == "Chinese")
+```
+
+<br>
+We use boxplots to compare the length of study between disciplines: 
+
+```{r warning=FALSE, message=FALSE}
+
+p13b <- plot_ly(high_uniq_zh, x = ~Field_main, y = ~length) %>%
+  add_boxplot(color = ~Field_main) 
+
+p13b %>% 
+  layout(title = list(text = "Chinese American University Men"), 
+         xaxis = list(title = "Field of study"),
+         yaxis = list(title = "Length of study")) %>% 
+  hide_legend()
+```
+
+<br>
+Longer periods of study referred to undetermined curricula (mainly PhD), spanning between 3 and 16 years. Further research is needed to specify the nature of these doctorates. Among better documented curricula, professional training in three major professional fields (law, medicine and business) required longer periods of study than other fields. They also presented greater heterogeneity. Lawyers in our sample may study for 1 to 11 years, medical doctors from 1 to 13, and business experts from 1 to 14. Sciences and engineering came next, with periods of study extending from 1 to 11 years and 1 to 8 years, respectively. Finally, the humanities required shorter and more homogeneous periods of study (from 1 to 6 years). Other fields (architecture, theology) were not of sufficient statistical importance to draw any conclusion on the time they required.  
+
+# University 
+
+Where did they study? Which universities did they choose? Did the students' choice differ across national groups? Did they congregate in a limited number of prestigious institutions? Do we observe a pattern of specialization among universities? Did some universities specialize in certain fields, while others offered a wider range of academic programs? 
+
+## General
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n)))
+
+
+```
+<br> 
+The top ten universities accounted for more than half of all degrees. Most of them were located on the East coast (Columbia, Harvard, Pennsylvania, NYU, Yale, Princeton) or in the immediate proximity (Michigan, Cornell, Chicago). The University of California (n°5) was the only institution on the Pacific Coast. Only the universities that delivered more than two degrees are displayed on the plot: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p22 <- auc4 %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  count()%>%
+  filter(n>2)%>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = University)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "American University Men in China: University", 
+       subtitle = "Place of education", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig22 <- ggplotly(p22) %>% hide_legend()
+
+fig22
+
+```
+
+<br>
+If we focus on the highest degrees, we obtain a similar ranking. The distribution between the top universities is slightly different though: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(highest_uniq %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n)))
+
+
+```
+<br>
+Columbia still ranked first and even gained in importance (from 9% to 11%) but New York and Cornell now appeared before Michigan and California. Focusing on the highest degrees reinforces the pattern of concentration around a limited number of first-class universities on the East coast. The ten top universities now totaled 60% of the highest degrees. This suggests that many students earned their first degrees in universities of lower standing before transferring to more prestigious institutions to to further their studies. 
+
+## Nationality 
+
+Let's focus on Chinese graduates: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  filter(Nationality == "Chinese") %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n)))
+
+
+```
+<br> 
+Chinese students largely accounted for the general trend. Their attraction for Columbia, Pennsylvania and Massachusetts Institute of Technology (MIT) was slightly stronger than the average. This reflects the stronger popularity of engineering and technical training among Chinese students, as we observed earlier. On the opposite, Princeton was relegated to a secondary position. The top of the list also included universities in China (St John's) that served as preparatory schools for study abroad. More generally, the ranking supports previous studies that have highlighted the Chinese students' concentration in leading universities on the East coast, especially Columbia, Pennsylvania, Harvard, and Michigan (Meng, 1931, p.7-8, Bieler, 1999, p.387 Lee, et al. 2020, p.12).
+
+The plot displayed only the universities that delivered more than two degrees: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p22a <- auc4 %>% 
+  filter(Nationality == "Chinese") %>% 
+  drop_na(University) %>%
+  group_by(University)%>%
+  count()%>%
+  filter(n>2)%>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = University)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "American University Men (Chinese): University", 
+       subtitle = "Place of education", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = NULL,
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig22a <- ggplotly(p22a) %>% hide_legend()
+
+fig22a
+
+```
+
+<br>
+If we focus on the highest degrees earned by Chinese students, we observe the same redistribution among the top universities, except for the University of California that held a lower position (n°9 compared to n°6 in the entire population): 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(highest_uniq %>% 
+  filter(Nationality == "Chinese") %>%  
+  drop_na(University) %>%
+  group_by(University)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n)))
+
+
+```
+<br> 
+This confirms the Chinese students' stronger propensity to study on the East coast where racial prejudices were not as strong as they were on the Pacific coast (Pott, 1936, p.7). More generally, focusing on the highest degrees again reinforced the domination of the top three institutions (Columbia, Pennsylvania, Harvard). 
+
+## Courses
+
+Did some universities offer special programs one would not find in other institutions? What was the impact of such specialization on the students' choices? This investigation focuses on the Chinese students. 
+
+First we observe that the most attractive universities offered a wide range of courses, which largely accounted for their greater popularity: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  filter(Nationality == "Chinese") %>%  
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  distinct(University, Field_main) %>%
+  group_by(University) %>%
+  count(sort = TRUE))
+
+
+```
+<br> 
+The list overlaps with we the ranking established earlier. The most popular universities usually offered a wider range of courses. Harvard and Pennsylvania ranked first with six different programs, while Columbia and Cornell offered courses in five distinct fields. Chicago, Michigan and New York University followed with four distinct specialties. Although they did not appear among the ten first universities, Illinois and Iowa State also proposed four and three distinct courses, respectively. The variety of programs alone did not account for the number of degrees granted. Highly specialized institutions such as John Hopkins in medicine (n°20) or the Massachusetts Institute of Technology (n°21), for instance, attracted a large number of students even though they presented a narrower range of courses (2).  
+
+The following table details the various graduate programs that each university offered: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  filter(Nationality == "Chinese") %>%  
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  group_by(University, Field_main)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")))
+
+
+```
+<br>
+Conversely, we can compare the range of universities in each field of study: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  filter(Nationality == "Chinese") %>%  
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  distinct(Field_main, University) %>%
+  group_by(Field_main) %>%
+  count(sort = TRUE))
+
+
+
+```
+
+<br>
+Students in the humanities and general sciences were scattered across a variety of institutions throughout the country. 31 universities offered programs in the humanities and 29 in general sciences. Chinese students in professional or technical fields were also presented with a wide range of options. Chinese medical students could choose among 15 distinct universities. 14 institutions offered programs in engineering, 13 in law and 9 in business. Students in architecture and education were more concentrated. Only two institutions granted degrees in architecture (Columbia and Pennsylvania) and three in education (Oberlin, Washington, Y.M.C.A. College in Illinois). Surprisingly, no educator in our population graduated from the famous Columbia Teachers' College. 
+
+Moreover, there were huge disparities between universities. Some of their courses attracted more students than others: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(auc4 %>% 
+  filter(Nationality == "Chinese") %>%  
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, University)%>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Field_main, desc(n)))
+
+
+```
+<br>
+Sciences graduates came from a handful of leading institutions: MIT (13%), Cornell and Pennsylvania (10% each), Michigan (8%), Columbia (7%). The remaining universities amounted for 5% or less (California, Illinois, Purdue, Wisconsin). 
+Yale was the primary choice for humanities students (14%), followed by Columbia (10%), California and Chicago (8% each), Harvard and Michigan (6% each), and twenty more institutions scattered across the country. 
+Graduates in business came from three main institutions: New York University (30%), Harvard (27%) and Pennsylvania (24%). 
+Cornell University granted more than one third of all degrees in engineering (34%). The remaining graduates came from Purdue, Rensselaer Polytechnic Institute (10% each), Lehigh, Michigan (7%) and ten other institutions scattered across the country. 
+Medical students came from two main universities - Harvard and Pennsylvania (20% each). The remaining graduates were scattered across a dozen of institutions. 
+The University of Chicago granted almost one quarter of all degrees in law, followed by Michigan and St. John’s in Shanghai (14% each). Yet the latter referred mostly to honorary degrees granted as a sign of recognition of individuals’ achievements later after they completed their studies. If we focus on the highest actual degrees, Chicago accounted for 42% of all law degrees. The remaining seven degrees were delivered by seven different universities. 
+Chinese architects were equally distributed between Columbia and Pennsylvania (3 degrees each). The three educators graduated from three distinct institutions (Oberlin, Washington, Y.M.C.A. College in Illinois). 
+
+If we compare compare Chinese students with their foreign counterparts: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p27a <- auc4 %>% 
+  filter(Nationality == "Chinese")%>%
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, University) %>%
+  count()%>%
+  filter(n>2) %>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = Field_main)) +
+  facet_wrap(~Field_main,  nrow = 4, scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China (Chinese): Academic Specialization", 
+       subtitle = "Courses and Universities", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "Field of Study", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig27a <- ggplotly(p27a) %>% hide_legend()
+
+fig27a
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p27b <- auc4 %>% 
+  filter(!Nationality == "Chinese")%>%
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  group_by(Field_main, University) %>%
+  count()%>%
+  filter(n>2) %>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = Field_main)) +
+  facet_wrap(~Field_main,  scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China (Foreign): Academic Specialization", 
+       subtitle = "Courses and Universities", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "Field of Study", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig27b <- ggplotly(p27b) %>% hide_legend()
+
+fig27b
+
+```
+
+<br>
+Distribution of courses among the two main groups: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p27a <- auc4 %>% 
+  drop_na(University) %>%
+  drop_na(Field_main) %>%
+  group_by(Nationality, Field_main, University) %>%
+  count()%>%
+  filter(n>2) %>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = Field_main)) +
+  facet_grid(Nationality~Field_main,  scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Academic Specialization", 
+       subtitle = "Courses and Universities", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "Field of study", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig27a <- ggplotly(p27a) %>% hide_legend()
+
+fig27a
+
+```
+
+<br> 
+Chinese and Western students attended the same universities in most fields, but we also find universities that were more specifically attended by Western students, such as Princeton, Yale and Reed in the humanities, or Georgetown in medicine. No Chinese students graduated from the Naval Academy in Annapolis. In fact, Chinese students were never admitted to military academies in the United States. Most of them were trained in Japan, Great Britain and Germany. Conversely, no Western engineers graduated from the Massachusetts University of Technology, which was highly popular among Chinese students in engineering. Network analysis will be used later to examine more systematically the patterns of co-attendance and co-affiliation between Chinese and foreign students. 
+
+## University over time
+
+How did this institutional geography change over time? What were the most attractive universities at each period? 
+
+The plots below compare the distribution of universities for each period between the two main national groups. Only the institutions that delivered at least 3 degrees are displayed: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p26 <- auc4 %>% 
+  drop_na(University) %>%
+  drop_na(period) %>%
+  group_by(period, Nationality, University) %>%
+  count()%>%
+  filter(n>2) %>%
+  ggplot(aes(reorder(x=University, n), y =n, fill = University)) +
+  facet_grid(period~Nationality,  scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: University over time", 
+       subtitle = "Universities over time", 
+       x = NULL,
+       y = "Number of degrees", 
+       fill = "University", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig26 <- ggplotly(p26) %>% hide_legend()
+
+fig26
+
+```
+
+<br>
+During the first phase (prior to 1909), the few Chinese students graduated from one single university - the University of Chicago. Western students were scattered across ten different institutions throughout the country. 
+
+During the second period, as Chinese graduates grew in number, they spread across some 15 institutions but mostly congregated around three main universities on the East Coast. Columbia, Pennsylvania and Harvard attracted the larger number of students during this period. Columbia and Harvard were also a popular choice among Western graduates, but many of them also attended specific institutions in which we found no Chinese, such as Georgetown or North Carolina. 
+
+The geographical dispersion increased during the last phase. We found Chinese students in almost every corner of the United States, from Hawaii to the Washington. But at the same time, the pattern of concentration on the East coast was reinforced by the growing attraction towards the most prestigious institutions. The universities attended by Chinese diversified but there were huge disparities between them. Western graduates were more equally distributed across a variety of institutions, some of them co-attended by Chinese students, some of them attended by Westerners only.  
+
+# Region
+
+Where did they study? In which part of the United States? Do we observe a shift from the East Coast to the Middle West, as observed in previous surveys (Potts, 1936)?  
+
+First, we load the geographical data (list of states in which the universities were located):
+
+```{r, warning=FALSE, message=FALSE}
+
+# load state data
+
+library(readr)
+aucstate <- read_delim("Data/aucstate.csv", ";", 
+    escape_double = FALSE, trim_ws = TRUE)
+
+aucstate
+
+```
+
+<br>
+In order to facilitate the interpretation, we grouped the 50 states listed in our dataset into 13 main regions : 
+
+```{r, warning=FALSE, message=FALSE}
+
+aucstate %>% 
+  group_by(Region) %>% 
+  count(sort = TRUE)
+
+```
+<br>
+
+Note that the list contains mostly US states but also a few locations outside of the United States (Canada, China, Japan, Netherlands, Japan, Hawai, United Kingdom). In order to facilitate further analyses, we lump together these outlying regions into one single category ("Other"): 
+
+```{r warning=FALSE, message=FALSE}
+aucstate <- aucstate %>%
+  mutate(region2 = fct_lump(Region, n = 5)) 
+
+aucstate %>% 
+  group_by(region2) %>% 
+  count(sort = TRUE) 
+
+```
+<br> 
+Then we join the geographical data to our main dataset: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 <- inner_join(auc4, aucstate, by = "State")
+
+datatable(auc5 %>% select(Name_eng, Name_zh, Nationality, University, State, Region, region2))
+
+```
+<br>
+The new dataset now includes two additional columns indicating the region in which the university was located (detailed and simplified classification). 
+
+We add the period for analyzing spatial shifts over time and we group foreigners in a single category to facilitate further interpretation: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 <- auc5 %>% mutate(period=cut(start, breaks=c(0, 1908, 1918, 1936), 
+                                       include.lowest = TRUE)) %>%
+  mutate(period = fct_recode(period, "1883-1908" = "[0,1.91e+03]",
+                             "1909-1918" = "(1.91e+03,1.92e+03]",
+                             "1919-1935" = "(1.92e+03,1.94e+03]")) %>%
+  mutate(Nationality2 = fct_collapse(Nationality,
+                                Other = c("Western", "Japanese"),
+                                Chinese = "Chinese")) 
+  
+```
+<br> 
+We're good to go! 
+
+## General distribution 
+
+The East coast attracted the majority of students (52% curricula), all nationalities included: 
+
+```{r warning=FALSE, message=FALSE}
+
+region_count <- auc5 %>% group_by(Region) %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%"))
+
+region_count %>% 
+  arrange(desc(n))
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+p30a <- auc5 %>% 
+  group_by(Region, Nationality2) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Region, n), y =n, fill = Nationality2)) +
+  geom_col(position = "dodge") +
+  coord_flip()+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Area of study", 
+       subtitle = "Area of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       fill = "Nationality",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig30a <- ggplotly(p30a) 
+
+fig30a
+
+```
+
+<br>
+This largely reflected the high concentration of first-tier universities on the East coast (Columbia, Harvard): 
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Region == "East coast") %>% 
+  group_by(Region, State, University) %>% 
+  count(sort = TRUE) 
+
+```
+
+<br>
+In the immediate proximity of the East coast, Middle Eastern states represented the second most attractive area (31%). Many prestigious universities were also located in this area (Chicago, Michigan): 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Region == "Middle East") %>% 
+  group_by(Region, State, University) %>% 
+  count(sort = TRUE) 
+
+```
+
+<br>
+Next we find the Pacific Coast (10%), represented by two major universities (California, Stanford): 
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Region == "Pacific Coast") %>% 
+  group_by(Region, State, University) %>% 
+  count(sort = TRUE) 
+
+```
+
+<br> 
+Finally, the middle West and Southeastern states accounted for less than 10% each: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Region == "Middle West") %>% 
+  group_by(Region, State, University) %>% 
+  count(sort = TRUE) 
+
+```
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Region == "Southeast") %>% 
+  group_by(Region, State, University) %>% 
+  count(sort = TRUE) 
+
+```
+
+<br>
+Overall, the distribution reflected the geography of higher education in the United States at the time, which for a large part has persisted to date.  
+
+Other regions outside the United States represented a minority. A few Chinese born overseas studied in their native region (Hawaii, Canada). Degrees obtained in China referred to honorary degrees granted by St John's University in Shanghai. A few students studied in European countries (United Kingdom, Netherlands) or in Japan before or after coming to the United States. 
+
+## Chinese / foreign
+
+Chinese students largely accounted for the general trend, except for the Middle West that appeared after China in the ranking (only three curricula): 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Nationality == "Chinese") %>% 
+  group_by(Nationality, Region)  %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%")) %>% 
+  arrange(desc(n))
+
+```
+
+<br>
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Nationality2 == "Other") %>% 
+  group_by(Region)  %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%")) %>% 
+  arrange(desc(n))
+
+```
+<br> 
+Non-Chinese students showed a stronger attraction for the Pacific Coast (13%) and to a lesser extent, the Middle West, at the expenses of the East Coast (45%). As noticed in previous studies, racial prejudices against Chinese nationals were stronger on the Pacific Coast. The attraction of Chinese students on the East Coast also reflected more specifically the heritage of the Chinese Educational Mission (1872-1882) with its headquarters in New England (Hartford, Connecticut). 
+
+```{r warning=FALSE, message=FALSE}
+
+p30 <- auc5 %>% 
+  group_by(Region, Nationality2) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Region, n), y =n, fill = Nationality2)) +
+  geom_col() +
+  coord_flip()+
+  facet_wrap(~Nationality2, scale = "free")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Area of study", 
+       subtitle = "Area of study", 
+       x = NULL,
+       y = "Number of curricula", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig30 <- ggplotly(p30) %>% hide_legend()
+
+fig30
+
+```
+
+<br>
+Let's now focus on the Chinese students. Do we observe a shift from the East coast to the middle West? Did our sample population support previous studies that have emphasized a gradual shift from the East the Middle West from the 1920s onwards, due to lower cost of living and the emergence of specialized institutions (engineering, medicine) in this region (Potts, 1936)? 
+
+```{r warning=FALSE, message=FALSE}
+
+auc5 %>% filter(Nationality == "Chinese") %>% 
+  drop_na(period)%>%
+  group_by(period, Region)  %>% 
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(100 * n/sum(n), 0), "%")) %>% 
+  arrange(period, desc(n))
+
+```
+<br> 
+During the first period, the majority of Chinese students concentrated in the Middle East area (50%) at the University of Chicago (4) and Oberlin (2). One third studied on the East coast (Yale, Columbia, Harvard) and 17% on the Pacific Coast (California, Pomona): 
+```{r warning=FALSE, message=FALSE}
+auc5 %>% filter(Nationality == "Chinese") %>% 
+  filter(period == "1883-1908")%>%
+  group_by(period, Region, University) %>% 
+  count() %>% 
+  arrange(desc(n), Region)
+```
+
+<br>
+The situation changed after the Boxer Indemnity Program was launched in 1909. The East Coast now represented the first destination (62%) and Middle East area came second (28%). The Eastern region (East Coast and Middle East included) clearly dominated and the Pacific Coast became less attractive (6%). 
+
+On the Pacific coast, Columbia became the primary choice for Chinese students during this period. This reflected its privileged ties with Qinghua College established in Beijing 1909 to prepare Boxer Indemnity Fellows to study in the United States, as well as the popularity of Columbia's Teachers College for students willing to specialized in education. The high rank of Harvard and Pennsylvania perpetuated the heritage of the Chinese Educational Mission. Yale still ranked high but we also observed the emergence of specialized institutions on the East Coast (Cornell, Massachusetts Institute of Technology, Rensselaer Polytechnic Institute, Massachusetts Agricultural College) or in Middle Eastern states: 
+
+```{r warning=FALSE, message=FALSE}
+auc5 %>% filter(Nationality == "Chinese") %>% 
+  filter(period == "1909-1918")%>%
+  group_by(period, Region, University) %>% 
+  count() %>% 
+  arrange(desc(n), Region)
+```
+
+
+<br>
+During the last phase, we observed a shift again towards the Middle Eastern states (32%) and the Pacific Coast (9%), at the expense of the East Coast, which nonetheless continued to dominate (54%): 
+
+```{r warning=FALSE, message=FALSE}
+auc5 %>% filter(Nationality == "Chinese") %>% 
+  filter(period == "1919-1935")%>%
+  group_by(period, Region, University) %>% 
+  count() %>% 
+  arrange(desc(n), Region)
+```
+<br>
+
+In conclusion, Chinese students spread across a larger number of states and universities from the second period, but at the same time, the tended to clustered in the most prestigious universities in the Eastern part of the country.
+
+# Occupations
+
+What was their occupations? Where were they recruited after graduation? In which sector were they employed? Who was their employer? 
+
+It is important to mention that the directory indicated the individuals' current employment only (in 1936). It did not list all the positions they had held since graduation (and even sometimes during their studies for the students who took part-time jobs to pay for their studies or those who were willing to apply their academic training on the field). As such, the directory offers just a snapshot of AUM's occupations at the time of its publication. The publication occurred at different points in the life trajectory of each individual. Their current employment therefore referred to a variety of situation, which makes it difficult to compare the individuals' respective level of achievement. Supplementing the data set with birth data (year of birth) would allow to compute their age at the time of publication and therefore better situate the current employment in their personal career. In the meantime, we will use the period of graduation as a proxy. 
+
+Based on the information given on their employer, we devised the following classification that defines nine main sectors of activity (Sector_1) subdivided into 43 categories (Sector_2): 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc4 %>% distinct(Sector_1, Sector_2) %>% 
+  drop_na() %>% 
+  arrange(Sector_1, Sector_2)
+
+```
+Before we analyze in greater detail the sector of employment, let's create a simplified dataset containing only unique individuals with their respective occupation: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+auc_job <- auc4 %>% distinct(Name_eng, Name_zh, 
+                             Nationality, period, 
+                             Employer_main, Employer_2, 
+                             Sector_1, Sector_2, 
+                             Country, City)
+
+datatable(auc_job)
+
+```
+<br>
+The new list contains 432 individuals with their name and nationality, the name of their employer, the main and secondary sector of activity, the country and the city in which they worked. It also includes the period of graduation for further examining the potential effect of time on job opportunities.      
+
+
+## Sector 
+
+Let's plot the number of individuals employed in each sector of activity for each national group: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p23 <- auc_job %>% 
+  drop_na(Sector_1) %>%
+  drop_na(Nationality) %>%
+  group_by(Sector_1, Nationality) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Sector_1, n), y =n, fill = Sector_1)) +
+  geom_col() +
+  coord_flip() +
+  facet_wrap(~Nationality, nrow = 3, scale = "free_y")+
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Sector of employment", 
+       subtitle = "Sector of employment", 
+       x = NULL,
+       y = "Number of individuals", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig23 <- ggplotly(p23) %>% hide_legend()
+
+fig23
+
+```
+
+<br>
+Private companies clearly dominated in the three groups. The central government in China came next among Chinese graduates, whereas their Western fellows held positions in non-profit organizations. Education was the third major post of employment for Chinese and Westerners alike. The remaining Chinese were distributed across organizations, local government and health institutions. Positions in foreign institutions in China (legations, consulates) came next among foreigners (23). We also found a dozen of Westerners who worked for the Chinese central government. The remaining Westerners were scattered across a myriad of sectors, especially hospitals, judiciary institutions, local government (provincial or municipal governments) and the military  (US Navy). Due to the small number of Japanese graduates, the pattern of their employment is not statistically significant.    
+
+Let's analyze in greater detail the proportion of the various sectors in each national group, and conversely, the proportion of the two main national groups in each sector. In the process, we will examine a few examples for each sector.
+
+Sector of employment in each national group:
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>% 
+  drop_na(Sector_1) %>%
+  drop_na(Nationality) %>%
+  group_by(Nationality, Sector_1) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+
+```
+<br> 
+The table confirms that employment in private companies dominated among Chinese AUM (101 individuals, 59%). The central government ranked second (31, 18%) before educational institutions (22, 13%). Other sectors employed less than 10% of American-trained Chinese each. These findings partly supports previous studies that had shown the prevalence of teaching and positions in the central government under the Nationalist regime (Wang, 1966, 169). Our population, however, also derived from this pattern by the heavy weight of the private sector. Moreover, government service came before education, whereas this ranking was reversed in Wang's survey. The private sector represented about the same share among Westerners (86, 58%). Next we found non-profit organizations that employed 20 individuals (13%) and foreign government institutions employing 16 individuals (11%). Teaching represented only 8% (12). Other sectors remained a minority. 
+
+Proportion of national groups in each sector:
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>%  
+  drop_na(Sector_1) %>%
+  drop_na(Nationality) %>%
+  group_by(Sector_1, Nationality) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Sector_1, desc(n))
+
+
+```
+<br>
+Chinese graduates dominated everywhere, except in foreign institutions in China (none) and non-profit organizations (31%). They were at par with Westerners in health institutions and represented a shorter majority in private companies (53%), local government (60%), and education (65%). Westerners dominated in judiciary and military institutions. 
+
+## Occupations over time
+
+How did AUM's occupations evolved over time, based on the graduation period? For this study, we focus on Chinese graduates: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  drop_na(Sector_1) %>%
+  drop_na(period) %>%
+  group_by(period, Sector_1) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(period, desc(n))
+
+
+```
+<br>
+The three Chinese AUM who graduated before the Boxer Indemnity Program were employed in two main sectors - two worked for private companies and one worked for the national government. Since the late imperial years, the private sector had been a major outlet for the Chinese returned students. This is too small a sample for generalizing but it appears that the national government was not the primary employer for these pioneering American-trained Chinese, who more often set up their own business or worked for others'. The occupation of two individuals remained undetermined, but we know from other sources that Kuang Fuzhuo 鄺富灼 (Fong F. Sec) had long been associated with the Commercial Press (a private company in the publishing industry): 
+
+```{r warning=FALSE, message=FALSE}
+datatable(auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(period == "1883-1908"))
+```
+<br>
+Professional opportunities considerably broadened and diversified for the students who graduated in the early years of the Republic. The private sector (28, 45%) and the national government (16, 26%) remained the two primary employers but as a new educational system was being set up, teaching became a new important outlet (10, individual 16%). The remaining graduates worked for non-profit organizations, especially the Young Men's Christian Association (Y.M.C.A.) (6%), hospitals (Central Hospital in Nanjing and the Orthopedic Hospital in Shanghai) and municipal governments (Shanghai Municipal Council, Municipality of Greater Shanghai) (2, 3% each). We have no information on the professional situation of 19 individuals: 
+
+```{r warning=FALSE, message=FALSE}
+datatable(auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(period == "1909-1918")%>%
+  arrange(Sector_1))
+```
+<br> 
+The private sector became even more attractive for the students who graduated after WWI (76, 67%). Positions in the central government declined but still ranked second (14%), before education (11%). Organizations, local government and health institutions employed less than 5% each. The occupation of 41 individuals remains undocumented:  
+
+```{r warning=FALSE, message=FALSE}
+datatable(auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(period == "1919-1935")%>%
+  arrange(Sector_1))
+```
+
+## Subsector
+
+The private sector, the central government and non-profit organizations are very broad categories. In which sub-fields did the AUM work more specifically? 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  drop_na(Sector_1) %>%
+  drop_na(Sector_2) %>%
+  group_by(Sector_1, Sector_2) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Sector_1, desc(n))
+
+
+```
+<br>
+Service industries dominated in the private sector. **Banking** ranked first (30%) before insurance (17%) and trade (10%). This supports previous studies that have linked the domination of American-trained experts among Chinese bankers to the development of a modern banking system patterned after Western models in Republican China (Wang, 1966, 171, Sheehan, 2021). 
+The **press and the publishing** industry represented 11%. 
+Despite the heavy weight of the silk and cotton industries in the Jiangsu region, **textile** enterprises employed just 6% of American University Men. Despite the boom in real estate in the early 1930s, the **building** sector represented just 2%. Despite the emphasis on technology since the late imperial years, revived during the Nanjing decade, engineers in various sectors remained a minority, which corroborates S.M. Lee's study of American-trained engineers' contribution in the first part of the directory (Lee, 1936, p. 91-106). Light industries of later emergence (movie, automobile, food) remained underdeveloped in China, even among our American-trained entrepreneurs: 
+
+```{r warning=FALSE, message=FALSE}
+datatable(auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Sector_1 == "Company") %>%
+  group_by(Sector_2, Employer_main) %>% 
+  count())
+```
+
+<br>
+Among the students employed by the *government*, 70% worked for the administration, mostly in national railways companies (National Southern Railway) and special state institutions such as the Salt Revenue Administration or the Maritime Customs. Two worked in technical bureaus (Bureau of Trademark, Bureau of Foreign Trade) under the supervision of the Ministry of Industry: 
+
+```{r warning=FALSE, message=FALSE}
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Sector_1 == "Central Government") %>%
+  filter(Sector_2 == "Administration") %>% 
+    group_by(Employer_main) %>% 
+    count(sort = TRUE)
+```
+<br>
+Four worked for various ministries (especially Finance and Transportation or Commmunications) and 6% held legislative positions: 
+
+```{r warning=FALSE, message=FALSE}
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Sector_1 == "Central Government") %>%
+  filter(Sector_2 == "Ministry") %>% 
+    group_by(Employer_main) %>% 
+    count(sort = TRUE)
+```
+
+<br>
+Nine served in non-profit organizations of a transnational, religious (Y.M.C.A., China Christian Advocate) or philanthropic nature (Chinese Red Cross, China International Famine Relief Commission):  
+
+```{r warning=FALSE, message=FALSE}
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Sector_1 == "Organization") %>%
+    group_by(Employer_main) %>% 
+    count(sort = TRUE)
+```
+<br> 
+The AUM employed in education worked exclusively in universities (especially Jiaotong University in Shanghai), which supports the common, enduring assumption since the 1930s that foreign-educated elites were reluctant to teach in primary and middle schools especially in the interior (Ly, 1936, p.36, Wang 1966, 182-185): 
+
+```{r warning=FALSE, message=FALSE}
+auc_job %>% 
+  filter(Nationality == "Chinese") %>%
+  filter(Sector_1 == "Education") %>%
+    group_by(Employer_main) %>% 
+    count(sort = TRUE)
+```
+
+<br>
+Sector of employment and graduation period: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p24a <- auc_job %>% 
+  drop_na(Sector_1) %>%
+  drop_na(Sector_2) %>%
+  drop_na(period) %>%
+  filter(Nationality == "Chinese")  %>%
+  group_by(period, Sector_1, Sector_2) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Sector_2, n), y =n, fill = Sector_2)) +
+  facet_grid(period~Sector_1,  scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Graduation period and sector of employment", 
+       subtitle = "Sector of employment", 
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Subsector", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig24a <- ggplotly(p24a) %>% hide_legend()
+
+fig24a
+
+```
+
+<br>
+If we focus on the three main sectors: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p24b <- auc_job %>% 
+  drop_na(Sector_1) %>%
+  drop_na(Sector_2) %>%
+  drop_na(period) %>%
+  filter(Nationality == "Chinese")  %>%
+  filter(Sector_1 %in% c("Central Government", "Company", "Organization"))%>%
+  group_by(period, Sector_1, Sector_2) %>%
+  count()%>%
+  ggplot(aes(reorder(x=Sector_2, n), y =n, fill = Sector_2)) +
+  facet_grid(period~Sector_1,  scales = "free") +
+  geom_col() +
+  coord_flip() +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "Graduation period and sector of employment (top 3 sectors)", 
+       subtitle = "Three major sectors of employment", 
+       x = NULL,
+       y = "Number of individuals", 
+      fill = "Subsector", 
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig24b <- ggplotly(p24b)  %>% hide_legend()
+
+fig24b
+
+```
+
+<br>
+From the plots, it appears that banking and administration rose during the second phase. The former continued to grow, whereas the latter stabilized during the third phase. They both constituted two major sectors that developed considerably during the Republic. Ministry grew at a slower pace during the same period. Transnational organizations emerged during the second phase and peaked after WWI. Service industries (insurance, trade, press) also took off  after the war.  
+
+## Employer
+
+The plot shows the top employers among all American university men (only those who employed more than 2 individuals are displayed): 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p25 <- auc_job %>% 
+  drop_na(Employer_main) %>%
+  group_by(Sector_1, Employer_main)%>%
+  count()%>%
+  filter(n>2)%>%
+  ggplot(aes(reorder(x=Employer_main, n), y =n, fill = Sector_1)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "American University Men in China: Top Employers", 
+       subtitle = "Main employer", 
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Sector",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig25 <- ggplotly(p25) 
+
+fig25
+
+```
+
+
+<br>
+Top employers in each national group: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p25a <- auc_job %>% 
+  drop_na(Employer_main) %>%
+  group_by(Nationality, Sector_1, Employer_main)%>%
+  count()%>%
+  filter(n>2)%>%
+  ggplot(aes(reorder(x=Employer_main, n), y =n, fill = Sector_1)) +
+  facet_wrap(~Nationality,  nrow = 3, scales = "free") +
+  geom_col() +
+  coord_flip()  +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Top Employers", 
+       subtitle = "Main employer", 
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Sector",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig25a <- ggplotly(p25a)
+
+fig25a
+
+```
+
+<br>
+Although the private sector prevailed over all other sectors, the top employer among Chinese graduates was not a private company, but a leading educational institution - Jiaotong University. Next, we found the Shanghai Southern Railway Company (a semi-private, semi-public enterprise), and four large private companies operating in various sectors, mainly banking, insurance and publishing. Surprisingly, the Commercial Press ranked first before major banking institutions such as the Bank of China and the Shanghai Commercial & Savings Bank. The central government held a secondary position in the list. The heavy weight of teaching, banking and the publishing industry reflects the local anchorage of the club - the American University Club of Shanghai. These three sectors were widely developed in Shanghai. American University Men in Nanjing or Beijing would probably present a different picture, with a stronger representation of government institutions. 
+
+By contrast, two New-York based multinational corporations were the primary employers for American-trained Westerners in China - National City Bank of New York and the Standard Oil Company. The American Consulate General and the U.S. Department of Commerce (especially the office of the Commercial Attache in Shanghai) were two other major outlet for American expatriates in China, before educational institutions such as St John's University and transnational, religious organizations such as the Y.M.C.A. Except for two American advisers and technical experts in the Salt Revenue Administration and the Shanghai Municipal Council, the remaining employers consisted of smaller private companies representing various sectors. 
+
+## Workplace
+
+Where were the AUM employed in 1936? 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>% 
+  drop_na(City) %>%
+  group_by(City) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(desc(n))
+
+
+```
+<br> 
+The overwhelming majority of American University Men worked in Shanghai (94%). This is hardly surprising since this the club was based in Shanghai. A few members, however, reported working outside of Shanghai. Among these outsiders, Nanjing, the capital of the Nationalist regime ranked first (10 individuals, 2%). A few others worked in the former capital Peiping (Beijing) and in important treaty ports (Hangzhou, Guangzhou) (2 each). Even fewer were those employed abroad (one in Singapore, one in California) or in secondary cities in China (Haichow, Hankow, Soochow, Tangshan). 
+
+These findings support previous surveys that have emphasized the American-returned students' propensity to congregate in large urban centers, especially treaty ports (Wang, 1966, 162-4). Wang noticed that very few foreign-educated men lived in towns smaller than county seats. He further observed that the urbanization of foreign-trained elites was a notable departure from the imperial practice in China according to which the most cherished ambition of a successful man was to return to his native district. These changes in elite residential patterns, however, reflected not so much their cultural attraction for the Westernized, urbanized way of life but rather, the historical fact that cities in general tended to concentrate population, capital, markets and networks, and therefore, job opportunities. Our American University Men knew that it was in large urban centers, not in rural villages, that they would find the human and economic resources they needed to develop their business and the best opportunities to employ their talents. 
+
+
+The distribution of workplaces among each national group is shown below: 
+
+```{r warning=FALSE, message=FALSE}
+
+auc_job %>% 
+  drop_na(City) %>%
+  drop_na(Nationality) %>%
+  group_by(Nationality, City) %>%
+  summarise(n = n()) %>%
+  mutate(ptg = paste0(round(n / sum(n) * 100, 0), "%")) %>%
+  arrange(Nationality, desc(n))
+
+
+```
+<br> 
+As their Chinese fellows, foreigners also worked primarily in Shanghai (98-100%%). Only one worked in Beijing. Two were employed outside of China, in Singapore and California. Almost all Chinese worked in their native country, except for one in Singapore and one in New York. The overwhelming majority was also based in Shanghai (91%) but they were more widely scattered across China. 
+
+
+How did their workplace relate to the sector of employment?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p28 <- auc_job %>% 
+  drop_na(City) %>%
+  drop_na(Sector_1) %>%
+  filter(Nationality !="Japanese")%>%
+  group_by(Nationality, Sector_1, City)%>%
+  count()%>%
+  ggplot(aes(reorder(x=City, n), y =n, fill = Sector_1)) +
+ facet_grid(Sector_1~Nationality,  scales = "free") +
+  geom_col() +
+  coord_flip()  +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "American University Men in China: Workplace and Sector of Employment", 
+       subtitle = "City", 
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Sector",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig28 <- ggplotly(p28) %>% hide_legend()
+
+fig28
+
+```
+<br>
+
+Let's focus on Chinese members: 
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+p28a <- auc_job %>% 
+  drop_na(City) %>%
+  drop_na(Sector_1) %>%
+  filter(Nationality =="Chinese")%>%
+  group_by(Sector_1, City)%>%
+  count()%>%
+  ggplot(aes(reorder(x=City, n), y =n, fill = Sector_1)) +
+ facet_wrap(~Sector_1,  scales = "free") +
+  geom_col() +
+  coord_flip()  +
+  scale_y_continuous(breaks = integer_breaks())+
+  labs(title = "Chinese American University Men: Workplace and Sector of Employment", 
+       subtitle = "City", 
+       x = NULL,
+       y = "Number of individuals", 
+       fill = "Sector",
+       caption = "Based on 'American University Men in China' (1936)")
+
+fig28a <- ggplotly(p28a) %>% hide_legend()
+
+fig28a
+
+```
+
+<br>
+Except for local government and educational institutions, all employers, whatever their nature, were based in either Shanghai or Nanjing. The private sector was the only sector that offered opportunities to work abroad, especially in the United States (New York) and Singapore. 
+
+
+# Concluding remarks
+
+While the first alumni were American expatriates, Chinese students in the United States rose after the Boxer Indemnity Scholarship was established in 1909 and boomed after WWI. As a result, Chinese members rapidly outnumbered their foreign fellows. 
+
+Chinese graduates generally showed a higher level of qualification than their foreign counterparts. Most of them earned at least two degrees, some of them up to three or four. Consequently, the proportion of masters and doctorates was higher among Chinese students. Based on this data, therefore, we are led to nuance previous assumptions about the allegedly low academic standards of the Chinese students abroad (Wang, 1966, 165-8).
+
+Chinese students were more inclined towards professional and technical fields, especially business, medicine and engineering, whereas the humanities and liberal arts dominated among Western graduates. This supports the general emphasis on technology and “practical” learning since the late imperial years and particularly during the Nanjing decade, as highlighted in previous studies (Wang, 1966, 168-174; Meng, 1931, 8). Chinese members of the American University Club, however, enjoyed a large degree of free choice, especially in comparison to their fellow countrymen in Japan or Europe, who were placed under stricter supervision (Wang, 1966:). In contrast to other surveys, the proportion of educators and political sciences remained comparatively low in our population, even among those who graduated during the founding period of the Republic (1911-9). This, however, may reflect differences in the method used for compiling information. (We may conjecture, for instance, that degrees in education were included in the humanities and those in political sciences were confounded with law). Notwithstanding methodological inconsistencies, the AUM's educational choices reflected the "laissez-faire" policy that prevailed in the early years of the Republic (Wang, 1966, 104, 112). It was not until 1928, in effect, that the government emphasized technology and defined quotas in education, applied sciences and other technical disciplines for the students who benefited from a government scholarship. Moreover, we suspect that American University Men included a large number of self-supporting students (as opposed to those directly sponsored by the government) who were freer to chose their field of study. Further research is needed to determine the American University Men's source of funding and how it related to their educational choice.
+
+Regarding their occupations, the private sector was the primary employer for both groups - Chinese and Westerners. Among private companies, the banking sector clearly dominated. The central government was the second largest employer for Chinese members. Teaching also developed as a major outlet for this group of returned students during the Republic. Besides private companies, foreign graduates worked in transnational organizations and foreign institutions in China.
+
+Because the club was based in Shanghai, most members worked in this city. Outside of Shanghai, Nanjing was the second major workplace, reflecting the heavy weight of government officials among American University Men. Few Chinese returned students worked outside of their country/ abroad. They were more widely scattered across China than Westerners, who tended to congregate in treaty ports.
+
+Where and when were they born? Unfortunately, the directory did not mention the place and date of birth. While the year of birth can generally be inferred from the year of graduation, further research is needed to document their place of birth (province, ancestry). The very fact the directory did not provide such information is revealing. As previous studies have pointed out, the returned students emphasized their national or professional identity, rather than their native place origins and ancestry, which represented a major departure from the previous imperial elites (Wang, 1966, 156-164).    
+In the next essays, we will deepen these findings through a combination of multivariate, geospatial, network and sequence analyses, aimed at correlating the various attributes and patterns we have examined separately so far. 
+
+# Appendix
+
+**Method for selecting each individual's highest degrees** 
+
+In order to perform multiple correspondence analysis (MCA) and for other interpretation such as the area of specialization, it is useful to have a list of unique individuals with the last degrees they obtained. For this purpose, we start from the dataset "highest" that we produced for analyzing individual curricula and the length of study. The resulting list still contained 23 individuals who obtained 2 (or 3) degrees during the last year of their studies. Based on this list, we apply the following guidelines for determining the highest degree: 
+
+  * Select the highest level (doctorate rather than master, master rather than bachelor)
+  * Select the most specialized (tropical medicine rather than medicine)
+  * In case the individual earned two specialized degrees, we retain the degree that was closer to his current position in 1936 (in other words, we emphasize matching over mismatching between training and employment)
+  * In case of undetermined PhD (and more generally, in cases when the field of the highest level was undetermined), we retain doctorates (the highest level) as the highest level and we add the specialization of the immediately lower degree. 
+  * In cases of degrees obtained outside the United States, select the last degree granted by an American university. 
+
+# References
+
+American University Club of Shanghai. *American University Men in China*. Shanghai: Comacrib Press, 1936.
+
+Bieler, Stacey. *“Patriots” or “Traitors”?: A History of American-Educated Chinese Students.* New York: Routledge, 2003.
+
+Boyton, C.L. “The Club’s History in Outline.” In *American University Men in China*, 19–28. Shanghai: Comacrib Press, 1936.
+
+Gale, Esson M. “Serving the Chinese Government” In *American University Men in China*, 63-9. Shanghai: Comacrib Press, 1936.
+
+Lee, S.M. “Engineering and Architecture.” In *American University Men in China*, 90–106. Shanghai: Comacrib Press, 1936.
+
+Ly, J. Usang. “American University Men in Education.” In *American University Men in China*, 29–42. Shanghai: Comacrib Press, 1936.
+
+Meng Chih (Meng Zhi), Paul. “The American Returned Students of China.” Pacific Affairs 4, no. 1 (1931): 1–16.
+
+Pott, F.L. Hawks. “Education of Chinese in the U.S.A.” In *American University Men in China*, 1–18. Shanghai: Comacrib Press, 1936.
+
+Sheehan, Brett. “Middling Elites: Middle Managers at the Shanghai Bank of China on the Eve of the Communist Revolution.” In *Knowledge, Power, and Networks: Elites in Transition in Modern China*, edited by Cécile Armand, Christian Henriot, and Huei-min Sun. Leiden: Brill, 2021.
+
+Wang, Y.C. *Chinese Intellectuals and the West, 1872-1949*. Chapel Hill, University of North Carolina Press, 1966.
+
+# Acknowledgment
+
+We are most grateful to [Dr. Jiang Jie](https://enepchina.hypotheses.org/2629) (Shanghai Normal University) who kindly provided us with a digital copy of the directory. 
+
+

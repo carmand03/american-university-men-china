@@ -1,0 +1,278 @@
+---
+title: "Academic paths"
+author: "Cécile Armand"
+date: "`r lubridate::today()`"
+
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    fig_caption: true
+    df_print: paged
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(networkD3)
+library(htmlwidgets)
+```
+
+# From list to sequences
+
+We start from the "aucplaces" dataset which contains several useful synthetic variables 
+  * the total number of degree obtained
+  * the highest degree obtained
+  * the main field of study (corresponding to the most specialized or highest degree obtaied)
+
+Load data
+```{r}
+library(readr)
+aucplaces <- read_csv("~/Places AUC/aucplaces.csv")
+aucplaces
+```
+<br>
+Workflow
+  1. Remove honorary degrees
+  2. Filter students with more than one degree
+  3. Identify duplicated years (simultaneous degrees)
+  4. Rank universities by order of succession 
+
+(1) Remove honorary degrees
+```{r}
+aucplaces %>% group_by(Honorary) %>% count() # 8 honorary degrees
+auc_rank <- aucplaces %>% filter(is.na(Honorary)) # 674 degrees remained
+```
+<br>
+(2) Filter students with more than one degree
+```{r}
+auc_rank <- auc_rank %>% group_by(Name_eng) %>% add_tally()
+auc_rank <- auc_rank %>% filter(n>1) # 452 curricula remain
+auc_rank <- auc_rank %>% filter(!Name_eng %in% c("Fan_Robert", "Lee_Poy Gum")) # obtained only 1 degree (false duplicate)
+auc_rank %>% group_by(Name_eng) %>% count() # 195 unique individuals earned at least 2 degrees (up to 5)
+```
+<br>
+(3) Identify duplicated years (simultaneous degrees) 
+```{r}
+# 35 individuals earned 2 or more (up to 4) degrees the same year 
+multiple_rank <- auc_rank %>% group_by(Name_eng, Year_start) %>% count()
+multiple_rank_2  <- multiple_rank %>% filter(n>1)
+```
+<br>
+(4) Rank university by order of succession
+```{r}
+# filter out multiple rank  
+auc_rank_filtered <- auc_rank %>% filter(!Name_eng %in% multiple_rank_2$Name_eng)
+auc_rank_filtered %>% group_by(Name_eng, Year_start) %>% count(sort = TRUE)
+# rank degrees 
+auc_rank_filtered <- auc_rank_filtered %>% mutate(rank = rank(Year_start)) %>% 
+  relocate(rank, .before = "Year_start")
+```
+<br>
+Export the dataset "auc_rank" to solve conflicts 
+```{r}
+write.csv(auc_rank, "auc_rank.csv")
+```
+<br>
+Reimport the manually curated dataset 
+```{r}
+library(readr)
+auc_rank_solved <- read_csv("~/Places AUC/auc_rank_solved.csv")
+auc_rank_solved
+```
+<br>
+Bind with filtered data
+```{r}
+auc_rank_all <- bind_rows(auc_rank_filtered, auc_rank_solved) # 811 degrees 
+auc_rank_all %>% group_by(Name_eng) %>% count(sort = TRUE) # 362 individuals, from 2 to 6 degrees
+auc_rank_all
+```
+<br>
+We can already use this to analyze the first/last universities attended. 
+
+Pivot wider to visualize the sequence of universities and/or disciplines, etc:
+```{r}
+auc_rank_to_pivot <- auc_rank_all %>% select(Name_eng, University, rank) 
+auc_rank_pivot <- auc_rank_to_pivot %>%
+  pivot_wider(names_from = rank, names_glue = "{.value}_{rank}", values_from = University)
+auc_sequence <- auc_rank_pivot %>% relocate("University_1", .before = "University_2") %>%
+  mutate_all(as.character)
+auc_sequence %>% arrange(University_1, University_2)
+```
+<br>
+Join with place number, period and main field 
+```{r}
+
+library(readr)
+places_attributes <- read_csv("~/Places AUC/places_attributes.csv")
+
+auc_attrib <- aucplaces %>% select(Name_eng, Name_zh, Field_high, period) %>% unique()
+place_attrib <- places_attributes %>% select(Name_eng, PlaceLabel)  %>% unique()
+
+auc_sequence <- left_join(auc_sequence, auc_attrib)
+auc_sequence <- left_join(auc_sequence, place_attrib)
+
+auc_sequence_df <- auc_sequence %>%
+  mutate_all(as.character)
+```
+<br>
+Export for further cleaning
+```{r}
+write.csv(auc_sequence_df, "auc_sequence_df.csv")
+```
+<br>
+Re-import clean dataset
+```{r}
+auc_sequence_clean <- read_csv("~/Places AUC/auc_sequence_clean.csv")
+```
+<br> 
+Join with employment data 
+```{r}
+auc_job <- aucplaces %>% select(Name_eng, Employer_main, Sector_1, Sector_2, start, end) %>% distinct()
+auc_sequence_job <- left_join(auc_sequence_clean, auc_job)
+auc_sequence_job
+```
+
+# From sequences to paths
+
+Select two first degrees
+```{r}
+# two first degrees 
+auc_seq_2 <- auc_sequence_job  %>% select('1', '2') %>%
+  rename(source = '1', target = '2')
+```
+<br>
+Remove missing values and compute link weight 
+```{r}
+links <- auc_seq_2 %>%
+  group_by(source, target) %>% 
+  drop_na(target)  %>% 
+  count() %>% 
+  rename(value = "n")
+
+links %>% arrange(desc(value))
+
+```
+<br> 
+Export table of links 
+```{r}
+write.csv(links, "deg-1-2.csv")
+```
+<br>
+Focus on migrations (remove students who stayed in the same college)
+```{r}
+link <- links[links$source != links$target, ]
+```
+<br>
+Focus on most important flows (n>1) 
+```{r}
+link <- link %>% filter(value>1)
+```
+<br>
+Create nodes 
+```{r}
+node <- data.frame(
+  name=c(as.character(link$source), 
+         as.character(link$target)) %>% unique()
+)
+```
+<br>
+Create unique id for each connection
+```{r}
+link$IDsource <- match(link$source, node$name)-1 
+link$IDtarget <- match(link$target, node$name)-1
+```
+<br>
+Build the networks
+```{r}
+p <- sankeyNetwork(Links = link, Nodes = node,
+                    Source = "IDsource", Target = "IDtarget",
+                    Value = "value", NodeID = "name", 
+                    sinksRight=FALSE)
+p
+```
+<br>
+Save the widget
+```{r}
+library(htmlwidgets)
+saveWidget(p, file=paste0( getwd(), "/deg1-2.html"))
+```
+<br>
+We can apply the same code for the next degrees (2 to 3, 3 to 4...) for the students who attended more than 2 universities.
+
+# From college to work
+
+
+First identify and remove students/colleges duplicates
+
+```{r}
+auc_pair <- aucplaces %>% select(Name_eng, University, Employer_main, Sector_1, Sector_2) %>% unique()
+```
+<br>
+Join with places number
+```{r}
+auc_pair <- left_join(place_attrib, auc_pair)
+auc_pair
+```
+<br>
+Select university and employer to create a list of links
+```{r}
+university_employer <- auc_pair %>% select(University, Employer_main)
+```
+<br>
+Create and save list of links
+```{r}
+links <- university_employer %>%
+  rename(source = University, target = Employer_main) %>%
+  group_by(source, target) %>% 
+  drop_na(target) %>% 
+  count() %>% 
+  rename(value = "n")
+
+links %>% arrange(desc(value))
+
+write.csv(links, "univ_employer.csv")
+```
+<br>
+Focus on the most important employers
+```{r}
+link <- links %>% filter(value>1)
+```
+<br>
+Create node list (contains every entity involved in the flow)
+```{r}
+node <- data.frame(
+  name=c(as.character(link$source), 
+         as.character(link$target)) %>% unique()
+)
+```
+<br>
+Create unique id for each connection
+```{r}
+link$IDsource <- match(link$source, node$name)-1 
+link$IDtarget <- match(link$target, node$name)-1
+```
+<br>
+Build the network
+```{r}
+p <- sankeyNetwork(Links = link, Nodes = node,
+                    Source = "IDsource", Target = "IDtarget",
+                    Value = "value", NodeID = "name", 
+                    sinksRight=FALSE)
+p
+```
+<br>
+Save the widget
+```{r}
+library(htmlwidgets)
+saveWidget(p, file=paste0( getwd(), "/employer.html"))
+```
+
+
+

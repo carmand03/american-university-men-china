@@ -1,0 +1,818 @@
+---
+title: "American University Men in China (1936)"
+subtitle: "Multiple correspondence analysis"
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This essay applies multiple correspondence analysis to correlate the various attributes related to the American University Men and to cluster the individuals based on shared patterns of education and employment. 
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    theme: readable # all theme -> https://bootswatch.com/3/
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(FactoMineR)
+library(Factoshiny)
+library(Factoshiny)
+library(explor)
+library(knitr)
+library(kableExtra)
+library(DT)
+```
+
+# Prologue
+
+This series of multiple correspondence analyses aims to correlate the various social attributes related to the American University Men, which have been examined separately so far, and to cluster the individuals based on shared patterns of education and employment. 
+
+# Data preprocessing
+ 
+For this experiment, we will use the dataset that contains only unique individuals with the highest degree they obtained. We will also have to factorize certain variables to enable multiple correspondence analysis. 
+
+First we load the data: 
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+highest_uniq <- read_delim("Data/highest_uniq.csv",
+";", escape_double = FALSE, trim_ws = TRUE)
+
+datatable(highest_uniq)
+
+```
+<br>
+As a reminder, the dataset contains 418 individuals and 31 variables. Run the line of code below to list the existing variables: 
+
+```{r warning=FALSE, message=FALSE}
+names(highest_uniq)
+```
+
+<br>
+We will select the relevant variables for multiple correspondence analysis. In doing so, we will make sure to eliminate redundant or correlated variables (i.e. university/state, field_main/field_2, year_start/period, Country/city). Since we will use the region instead of the university or state as the place of education, we first append the region to the the main dataset. 
+
+```{r warning=FALSE, message=FALSE}
+# we load state/region data
+library(readr)
+aucstate <- read_delim("Data/aucstate.csv",
+";", escape_double = FALSE, trim_ws = TRUE)
+aucstate <- aucstate %>%
+  mutate(region2 = fct_lump(Region, n = 5))
+
+# we append the region
+highest_uniq_mca <- inner_join(highest_uniq, aucstate, by = "State")
+# we select the relevant variables 
+highest_uniq_mca <- highest_uniq_mca %>% 
+  select(Name_eng, Nationality, 
+         region2, Degree_level, Field_main, 
+         period, Sector_1, City)
+
+```
+
+<br>
+We replace missing values (NA) with appropriate labels to reduce variability in the data: 
+
+```{r warning=FALSE, message=FALSE}
+highest_uniq_mca <- highest_uniq_mca %>% 
+  mutate(degree = replace_na(Degree_level, "Undetermined")) %>% 
+  mutate(field = replace_na(Field_main, "Undetermined")) %>% 
+  mutate(sector = replace_na(Sector_1, "Undetermined")) %>%
+  mutate(city = replace_na(City, "Undetermined")) 
+
+```
+
+
+<br> 
+We lump together and recode rare values for the nationality, the field of study, the sector and city of employment: 
+
+Recode the nationality: 
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca <- highest_uniq_mca %>%
+  mutate(nationality = fct_collapse(Nationality,
+                                Chinese = c("Chinese"),
+                                Other = c("Western", "Japanese")))
+
+highest_uniq_mca %>%
+  group_by(nationality) %>% 
+  count(sort = TRUE)
+
+```
+<br> 
+Recode the field of study: 
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca <- highest_uniq_mca  %>%
+  mutate(field = fct_lump(field, n = 7)) 
+
+highest_uniq_mca %>%
+  group_by(field) %>% 
+  count(sort = TRUE)
+
+```
+<br> 
+Recode sector of employment: 
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca <- highest_uniq_mca  %>%
+  mutate(sector = fct_lump(sector, n = 6)) 
+
+highest_uniq_mca %>%
+  group_by(sector) %>% 
+  count(sort = TRUE)
+
+```
+<br> 
+Recode city:
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca <- highest_uniq_mca %>%
+  mutate(city = fct_collapse(city,
+                                Abroad = c("New York", "Pasadena, CA", "Singapore"),
+                                Shanghai = c("Shanghai"),
+                                Nanjing = c("Nanking"),
+                                China_other = c("Canton", "Haichow", "Hangchow","Haichow","Hankow","Peiping","Soochow", "Tangshan (Hopei)"), 
+                             Undetermined = c("Undetermined"))) 
+
+highest_uniq_mca %>%
+  group_by(city) %>% 
+  count(sort = TRUE)
+
+```
+<br>
+
+
+
+
+<br>
+
+We select again the relevant variables: 
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca <- highest_uniq_mca %>% 
+  rename(name = Name_eng) %>% 
+  select(name, nationality, 
+       region2, degree, field, 
+       period, sector, city) %>%
+  rename(region = region2)
+
+names(highest_uniq_mca)
+
+```
+
+<br> 
+
+We read the first column as row names: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca_tbl <- column_to_rownames(highest_uniq_mca, var = "name") 
+
+```
+
+<br>
+Let's inspect the results: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(highest_uniq_mca_tbl)
+
+```
+
+<br>
+The dataset now contains 417 observations (individuals) and 7 variables:  
+
+
+We propose to apply a series of MCA, from the most general to the most specific: 
+
+  1. entire dataset (all members, all national groups and all periods included), (1) with all active variables; (2) with nationality as supplementary variable; (3) with period as supplementary variable. 
+  2. period-based (3 periods, 3 MCA)
+  3. nation-based (2 groups, 2 MCA)
+  4. nation and period (2 groups*3 periods = 6 MCA)
+
+For the second series of MCA, we will create three samples for each of the three periods, we remove the now useless variable "period" and we read the first column as row name: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca_p1 <- highest_uniq_mca %>% 
+  filter(period == "1883-1908") 
+highest_uniq_mca_p1$period <- NULL
+highest_uniq_mca_p1_tbl <- column_to_rownames(highest_uniq_mca_p1, var = "name")
+
+
+highest_uniq_mca_p2 <- highest_uniq_mca %>% 
+  filter(period == "1909-1918")
+highest_uniq_mca_p2$period <- NULL
+highest_uniq_mca_p2_tbl <- column_to_rownames(highest_uniq_mca_p2, var = "name")
+
+
+highest_uniq_mca_p3 <- highest_uniq_mca %>% 
+  filter(period == "1919-1935")
+highest_uniq_mca_p3$period <- NULL
+highest_uniq_mca_p3_tbl <- column_to_rownames(highest_uniq_mca_p3, var = "name")
+
+
+```
+<br>
+
+We inspect the results: 
+
+```{r warning=FALSE, message=FALSE}
+highest_uniq_mca_p1_tbl
+highest_uniq_mca_p2_tbl
+highest_uniq_mca_p3_tbl
+```
+
+<br>
+The first period contains 48 observations (individuals), the second 145 and the last one 221. There is a clear imbalance between periods but this should not be a problem. We have the 6 same variables for all three periods. 
+
+For the third series of MCA, we split the data into two sets, one for each national group (Chinese/foreigners): 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca_zh <- highest_uniq_mca %>% 
+  filter(nationality == "Chinese") 
+
+highest_uniq_mca_foreign <- highest_uniq_mca %>% 
+  filter(nationality != "Chinese")
+
+```
+<br>
+We read the first column as row names and we remove the (now useless) variable "Nationality": 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_uniq_mca_zh_tbl <- column_to_rownames(highest_uniq_mca_zh, var = "name") 
+highest_uniq_mca_zh_tbl$nationality <- NULL
+
+highest_uniq_mca_foreign_tbl <- column_to_rownames(highest_uniq_mca_foreign, var = "name") 
+highest_uniq_mca_foreign_tbl$nationality <- NULL
+
+```
+
+<br>
+Let's inspect the results: 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(highest_uniq_mca_zh_tbl)
+
+```
+
+We now have 231 Chinese and 184 foreigners, with 6 variables for each group. 
+
+```{r warning=FALSE, message=FALSE}
+
+datatable(highest_uniq_mca_foreign_tbl)
+
+```
+
+<br>
+For the last series of MCA, we will split the data into six sets, one for each period and each national group: 
+
+
+
+
+<br>
+We're all set! 
+
+Let's save the data as csv files: 
+
+```{r warning=FALSE, message=FALSE}
+
+write.csv(highest_uniq_mca, "highest_uniq_mca.csv")
+
+write.csv(highest_uniq_mca_zh, "highest_uniq_mca_zh.csv")
+write.csv(highest_uniq_mca_foreign, "highest_uniq_mca_foreign.csv")
+
+write.csv(highest_uniq_mca_p1, "highest_uniq_mca_p1.csv")
+write.csv(highest_uniq_mca_p2, "highest_uniq_mca_p2.csv")
+write.csv(highest_uniq_mca_p3, "highest_uniq_mca_p3.csv")
+
+
+```
+
+We propose to start with the Chinese members, and then compare the results with their foreign fellows. 
+
+# MCA on entire population
+
+First we load the packages: 
+
+```{r warning=FALSE, message=FALSE}
+
+library(FactoMineR)
+library(Factoshiny)
+library(explor)
+
+```
+<br>
+We apply MCA to the entire dataset: 
+
+```{r warning=FALSE, message=FALSE}
+
+res.MCA <- MCA(highest_uniq_mca_tbl, graph = FALSE)
+
+```
+
+<br>
+Let's plot the results: 
+```{r warning=FALSE, message=FALSE}
+plot.MCA(res.MCA, choix='var',title="Graph of variables (1883-1935)",col.var=c(1,2,3,4,5,6,7))
+plot.MCA(res.MCA,invisible= 'ind',col.var=c(1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,6,6,6,6,6,6,6,7,7,7,7,7),title="MCA Graph (1883-1935)",label =c('var'))
+```
+
+<br>
+Altogether, the two first dimensions capture almost 15% of information (7.46% on the first dimension, 7.18% on the second), which is not so bad given the number of observations, variables and values contained in the dataset. 10 dimensions are necessary to capture at least 50% of information, 17 dimensions to retain 75%, and 30 for 100%. 
+
+The field of study and the academic degree are the best projected variables on the two dimensions, especially the second (0.75), slightly less on the first (0.5). The sector of employment is better projected on the second dimension (0.3). The nationality is better projected on the first (0.4). The remaining variables (region, city, period) are poorly projected on the two first dimensions. 
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.MCA)
+```
+
+```{r warning=FALSE, message=FALSE}
+res <- explor::prepare_results(res.MCA)
+explor::MCA_var_plot(res, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-2.52, 3.51),
+    ylim = c(-2.5, 3.53))
+```
+
+<br>
+The first dimension opposes medical doctors (above) to other fields of study with lower level of qualification (bachelor, master) below. The second dimension further separates bachelors in the humanities (right) and master in business (left), with sciences graduates in between. 
+The second dimension separates Chinese (on the left) and foreign graduates on the right. The former attended universities on the East coast and were employed by the central government, whereas the latter studied in other regions (especially the Midwest) and worked for foreign governments in China. Moreover, the latter were more likely to have graduated during the first period (1883-1908). Foreign graduates belonged to an older generation and preceded their Chinese counterparts. 
+
+Next, we apply hierarchical clustering (HCPC) on all 30 dimensions. 
+
+```{r warning=FALSE, message=FALSE}
+res.MCA<-MCA(highest_uniq_mca_tbl,ncp=30,graph=FALSE)
+res.HCPC<-HCPC(res.MCA,nb.clust=9,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC,choice='tree',title='Hierarchical tree of AUM (1883-1935)')
+plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor Map of AUM (1883-1935)')
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='AUM: Hierarchical tree on factor map (1883-1935)')
+```
+<br>
+The partition is characterized by (by decreasing importance): the place of work (city), the field of study, the degree, the period of graduation, the sector of employment, and finally, the nationality (the region of study is not statistically significant).  
+
+The algorithm detected 9 classes: 
+	1.	Chinese officials who worked for the central government in Nanjing (parangons: Liang_Chi-tai, Sun Fo (0.95) vs specific individuals (Yu Min, Luther Jee 3.15). 
+	2.	Chinese business graduates who generally earned a master’s degree during the last period (1919-1935) (Chang_Kin-fang: 0.39 / spe : Chang_Hsueh-Wen 2.1)
+	3.	Certified engineers (mostly foreigners, except Lee_Tsu Hsien (0.6)
+	4.	Educators with unknown educational background (Chen Chun, 0.87)
+	5.	Bachelors in sciences or the humanities who worked in non-profit organizations in Shanghai (mostly foreigners) (specific/antithesis: Wang Zhengting)
+	6.	Medical doctors (parangon: F.S. Wu, Li Kang, S.T. Woo, H.L. Yen: 0.58)
+	7.	AUM who worked/resided outside of China (Milton Lee, C.H. Wang: 1.2)
+	8.	Poorly documented foreign pioneers (1883-1908) (unknown place and sector of employment) (Murphy, Parker, Tobin)
+	9.	Undated doctorates (T.E. Mao, 3)
+	
+To display the summary results of the HCPC, just run the following line of code: 
+```{r warning=FALSE, message=FALSE}
+summary(res.HCPC)
+```
+
+# Time-based MCA 
+
+In the next step, we produce and compare three successive MCA, one for each period, in order to trace change over time. 
+
+## Phase 1 (1883-1908)
+
+```{r warning=FALSE, message=FALSE}
+
+res.MCA1 <- MCA(highest_uniq_mca_p1_tbl, graph = FALSE)
+
+```
+
+
+<br>
+
+Let's plot the results:
+```{r warning=FALSE, message=FALSE}
+plot.MCA(res.MCA1, choix='var',title="Graphe of variables (1883-1908)",col.var=c(1,2,3,4,5,6))
+plot.MCA(res.MCA1,invisible= 'ind',selectMod= 'cos2 0.1',col.var=c(1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6),title="MCA Graph (1883-1908)",label =c('var'))
+```
+
+<br>
+Altogether, the two first dimensions capture almost 20% of information (10.7% on the first dimension, 9.75% on the second), which is better than for the previous MCA, but this was expected since we have fewer individuals during this period (48). Six dimensions are necessary to capture at least 50% of information, 11 dimensions to retain 75% of information, and 24 for 100%. 
+The field of study and the academic degree are still well projected on the two dimensions (0.75). The sector of employment is now better projected on the first dimension (0.7). The region of study is now fairly projected on the two dimensions (0.5). The workplace (city) is best projected on the second (slightly over 0.25). Nationality is poorly projected on the two dimensions, which largely reflects the statistical imbalance between the two groups (only 5 Chinese against 43 foreigners). We can therefore set the nationality as a supplementary variable. 
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.MCA1)
+```
+
+```{r warning=FALSE, message=FALSE}
+res1 <- explor::prepare_results(res.MCA1)
+explor::MCA_var_plot(res1, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-2.66, 4.34),
+    ylim = c(-3.9, 3.1))
+```
+
+<br>
+The first dimension separates doctors in law (above) from certified engineers (below). The second dimension further separates bachelor in sciences and the humanities (right) from unknown fields of study and level of qualification from the East Coast (left). The former group studied on the Pacific Coast and worked for foreign governments in China, whereas the latter graduated on the East coast and engaged in teaching (were employed in educational institutions). 
+
+Graph of individuals (red dots represent Chinese graduates, blue dots foreigners): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res1, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "nationality", labels_size = 9, point_opacity = 0.5,
+    opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-2, 2.49), ylim = c(-2.08, 2.42))
+```
+
+Next, we apply hierarchical clustering (HCPC) on all 24 dimensions: 
+```{r warning=FALSE, message=FALSE}
+
+res.HCPC1<-HCPC(res.MCA1,nb.clust=10,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC1,choice='tree',title='AUM Hierarchical tree (1883-1908)')
+plot.HCPC(res.HCPC1,choice='map',draw.tree=FALSE,title='AUM Factor map (1883-1908)')
+plot.HCPC(res.HCPC1,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='AUM: Hierarchical tree on factor map (1883-1908)')
+```
+
+<br>
+The partition is characterized by (by decreasing importance): the field of study, the degree, and the region of study. The sector of activity is not significant. 
+The algorithm detected 10 classes 
+	1.	Graduates from outside of the core regions of study in the United States employed by the Chinese central government (Gale)
+	2.	Educators with unknown educational background (Rhame, Fong) 
+	3.	Doctorates in miscellaneous field of study (Pott)
+	4.	Doctors in law who graduates from Mideastern universities (Lo Pan, Arthur Bassett)
+	5.	Certified engineers (Daub, Pharis)
+	6.	Doctors in medicine (Martin, Dunlap)
+	7.	Master graduates in the humanities employed by the central government (Hylbert)
+	8.	Graduates from the Midwest, mostly likely in law (Helmick)
+	9.	Lower graduates (bachelor in sciences and the humanities, with unknown workplace) (Bates, Hoyt, Hager, Boynton)
+	10.	Sciences bachelors from the Pacific coast employed by a foreign government in China (Sawyer, Arnold)
+
+To display the summary of the results, just run the following line of code: 
+```{r warning=FALSE, message=FALSE}
+summary(res.HCPC1)
+```
+
+
+## Phase 2 (1909-1918)
+
+```{r warning=FALSE, message=FALSE}
+
+res.MCA2 <- MCA(highest_uniq_mca_p2_tbl, graph = FALSE)
+
+```
+
+<br>
+
+Let's plot the results:
+```{r warning=FALSE, message=FALSE}
+
+plot.MCA(res.MCA2, choix='var',title="Graphe of variables (1909-1918)",col.var=c(1,2,3,4,5,6))
+plot.MCA(res.MCA2,invisible= 'ind',selectMod= 'cos2 0.05',col.var=c(1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6),title="MCA Graph (1909-1918)",label =c('var'))
+
+```
+
+<br>
+Altogether, the two first dimensions capture almost 17% of information (9% on the first dimension, 7.89% on the second), which is not so bad given the high number of variables and values in the dataset. 8 dimensions are necessary to capture at least 50% of information, 14 dimensions to retain 75% of information, and 27 for 100%. 
+The field of study and the academic degree are still well projected on the two dimensions (field: 0.75, degree: 0.6). The sector of employment is now better projected on the second dimension (0.6). The three remaining variables are poorly projected on the second axis. Nationality is projected only on the first dimension (0.3). 
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.MCA2)
+```
+
+```{r warning=FALSE, message=FALSE}
+res2 <- explor::prepare_results(res.MCA2)
+explor::MCA_var_plot(res2, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-2.58, 3.23),
+    ylim = c(-2.09, 3.72))
+```
+<br>
+
+The first dimension isolates medical doctors from the Pacific Coast (above) from other fields of study and level of qualificatio (below). The second dimension further separates bachelors in the humanities and sciences from the Midwest (right) and master in business and certified engineers who studied on the East Coast (right). The former group referred to foreigners employed by foreign governments in China or working abroad, whereas the latter referred to Chinese graduates employed by the central government in Nanjing or engaged in teaching.  
+
+Graph of individuals (red dots represent Chinese graduates, blue dots foreigners): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res2, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "nationality", labels_size = 9, point_opacity = 0.5,
+    opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-2, 2.49), ylim = c(-2.08, 2.42))
+```
+
+Next we apply HCPC on all 27 dimensions: 
+
+```{r warning=FALSE, message=FALSE}
+res.HCPC2<-HCPC(res.MCA2,nb.clust=10,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC2,choice='tree',title='AUM Hierarchical tree (1909-1918)')
+plot.HCPC(res.HCPC2,choice='map',draw.tree=FALSE,title='AUM Factor map (1909-1918)')
+plot.HCPC(res.HCPC2,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='AUM: Hierarchical tree on factor map (1909-1918)')
+```
+<br>
+The partition is characterized by (by decreasing importance): the workplace (city), the field of study, the degree, and the region of study. The nationality is not significant. 
+The algorithm detected 10 classes (but cluster n°10 consisted of just one individual): 
+	1.	Engineers who worked in China but not in Shanghai or Nanjing
+	2.	Chinese master graduates in business employed by the central government in Nanjing (Chang Hsueh-wen, Chang Loy) 
+	3.	Medical doctors (T.M. Li, Joe Lum, Cheuk-Shang Mei)
+	4.	Certified engineers employed in the private sector (James Conrad)
+	5.	Educators with undocumented background (C.P. Ling)
+	6.	Doctors in miscellaneous field of study employed in non-profit organizations  (Carlteon Lacy, Emory Luccock)
+	7.	Law graduates from peripheral region whose occupation remained unknown (Wang Zhengting)
+	8.	Bachelors in Sciences or the humanities employed in private companies (Frederick Bowen). 
+	9.	Foreigners with unknown background (Frederick Parker)
+	10.	Humanities graduates working abroad (Monnett Davis)
+
+N.B. From the transliterated names, it appeared that many Chinese graduates during this period were of Cantonese origins, which supports previous studies that have established the prominence of Guangzhou natives among American returned students (Wang, 1966, Bieler 1999). 
+
+To display the summary of the results, just run the following line of code: 
+```{r warning=FALSE, message=FALSE}
+summary(res.HCPC2)
+```
+
+## Phase 3 (1919-1935)
+
+```{r warning=FALSE, message=FALSE}
+
+res.MCA3 <- MCA(highest_uniq_mca_p3_tbl, graph = FALSE)
+
+```
+<br>
+
+Let's plot the results:
+```{r warning=FALSE, message=FALSE}
+plot.MCA(res.MCA3, choix='var',title="Graphe of variables (1919-1935)",col.var=c(1,2,3,4,5,6))
+plot.MCA(res.MCA3,invisible= 'ind',selectMod= 'cos2 0.05',col.var=c(1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6),title="ACM graph (1919-1935)",label =c('var'))
+```
+
+<br>
+Altogether, the two first dimensions capture more than 15% of information (8.5% on the first dimension, 7.8% on the second), which is not so bad given the high number of variables and values in the dataset. 8 dimensions are necessary to capture at least 50% of information, 15 to retain 75% of information, and 27 for 100%. 
+
+The field of study and the academic degree remain the best projected variables on the two dimensions (0.75 on the first, 0.5 on the second). The sector of employment is better projected on the first dimension (over 0.5), whereas nationality and region are better projected on the 2nd (between 0.25 and 0.5). The workplace (city) remains poorly projected on the two dimensions.
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.MCA3)
+```
+
+```{r warning=FALSE, message=FALSE}
+res3 <- explor::prepare_results(res.MCA3)
+explor::MCA_var_plot(res3, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-2.94, 3.26),
+    ylim = c(-2.74, 3.46))
+```
+<br>
+The first dimension opposes doctorates in law and medicine (right) with lower degrees in other disciplines (left). The second dimension further separates bachelors in the humanities and general sciences (above) from master’s degrees in business and engineering (below). The former group essentially consisted of foreign graduates from the Midwest or Pacific coast who served foreign governments in China. The latter comprised Chinese who graduated on the East coast and were employed in a wider range of sectors - especially in the private sector, higher education and the central government. This confirms what we observed in the first essay, namely that Chinese students showed a higher level of qualification than their non-Chinese counterparts, and that foreign government service was the privilege of foreigners. 
+
+Graph of individuals (red dots represent Chinese graduates, blue dots foreigners): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res3, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "nationality", labels_size = 9, point_opacity = 0.5,
+    opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-2, 2.49), ylim = c(-2.08, 2.42))
+```
+
+<br>
+Distribution of students according to their field of study (stronger opacity reflects lower contribution): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "field", labels_size = 9, point_opacity = 0.5,
+    opacity_var = "Cos2", point_size = 64, ellipses = FALSE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-2, 2.49), ylim = c(-2.08, 2.42))
+```
+
+<br>
+Distribution of graduates according to their level of qualification: 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "degree", labels_size = 9, point_opacity = 0.5,
+    opacity_var = NULL, point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-2, 2.49), ylim = c(-2.08, 2.42))
+```
+
+
+Finally, we apply HCPC on all 27 dimensions: 
+
+```{r warning=FALSE, message=FALSE}
+res.HCPC3<-HCPC(res.MCA3,nb.clust=10,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC3,choice='tree',title='AUM Hierarchical tree (1919-1935)')
+plot.HCPC(res.HCPC3,choice='map',draw.tree=FALSE,title='AUM Factor map (1919-1935)')
+plot.HCPC(res.HCPC3,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='AUM: Hierarchical tree on factor map (1919-1935)')
+```
+<br>
+The partition is characterized by (by decreasing importance): the field of study, the workplace (city), the degree, the sector of employment, and the region of study. The nationality is not significant. 
+
+The algorithm again detected 10 classes (but cluster 6 consisted of just one individual): 
+	1.	Foreign graduates in sciences from Midwestern universities (Paul Carnes, E.F. Drumright)
+	2.	Certified engineers employed by the central government (Frank Exe, Kai Man Yung)
+	3.	Foreign officials who earned a bachelor in the humanities outside of the East coast (Meyers, Hillhouse, MacKinnon, Nichols)
+	4.	Chinese master graduates in business or sciences from the East coast who served in the central government (Paul Hsu Ho, Chih Ko, D.Y. Lee, S.C. Lee, PG. Shen)
+	5.	Undocumented occupations (A. Loeser, C.Y. Wang, Chester Tobin)
+	6.	Graduates (more likely in law or engineering) working in Nanjing (Yui Ming, T.T. Zee)
+	7.	Undocumented curricula (Chun Chen, Percy Chu, Chester Huang, James Chiomin Huang, Alfred Lee) 
+	8.	Chinese graduated in minor fields (e.g. architecture) from the East coast (Robert Fan, Poy Gum Lee)
+	9.	Educators or other workers employed in cities other than Shanghai or Nanjing in China (Tseng Yang-fu, Stephen Hu, Floyd O’Hara)
+	10.	Doctors in medicine or law (Bak Wah Lang, George T. Owyang, Benjamin Wong, W.S. Wu, Kang Li)
+
+
+**Concluding remarks**
+
+To conclude this serial MCA, we see an increasingly clear association between higher level of qualification (doctorates) and professional fields (medicine, law) over time, as well as between foreign national and lower degrees. The series of MCA also reveal that over time, masters’ degree were offered a widening range of job opportunities, but especially three - private companies, central government and teaching. Incidentally, the graphs also highlight the growing concentration of Chinese students on the East coast. 
+
+
+# Nation-based MCA 
+
+## Chinese 
+
+First, we apply MCA to the population of Chinese graduates: 
+
+```{r warning=FALSE, message=FALSE}
+
+res.mca_zh <- MCA(highest_uniq_mca_zh_tbl, graph = FALSE)
+
+
+```
+<br>
+Let's plot the results: 
+
+```{r warning=FALSE, message=FALSE}
+plot.MCA(res.mca_zh, choix='var',title="Chinese AUM: Graphe of variables",col.var=c(1,2,3,4,5,6))
+plot.MCA(res.mca_zh,invisible= 'ind',selectMod= 'cos2 0',col.var=c(1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,5,5,6,6,6,6,6),title="Chinese AUM: ACM Graph",label =c('var'))
+```
+
+Altogether, the two first dimensions capture almost 16% of information (8.3% on the first dimension, 7.24% on the second), which is not so bad given the high number of variables and values in the dataset. Nine dimensions are necessary to retain at least 50% of information, 15 for having 75%, and 27 for 100%. 
+
+The field of study and the degree are the best projected variables on the two dimensions (over 0.75). The sector of employment is better projected on the first dimension (almost 0.3). The workplace (city) is better projected on the second dimension. The remaining variables (region, period) are poorly projected on the two dimensions. 
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.mca_zh)
+```
+
+
+```{r warning=FALSE, message=FALSE}
+
+res_zh <- explor::prepare_results(res.mca_zh)
+explor::MCA_var_plot(res_zh, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-2.65, 3.54),
+    ylim = c(-3.07, 3.13))
+
+```
+
+<br> 
+
+Distribution of individuals according to their level of qualification (greater opacity reflects lower quality of projection): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res_zh, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "degree", labels_size = 9, point_opacity = 0.5,
+    opacity_var = "Cos2", point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-1.73, 2.48), ylim = c(-2.46, 1.75))
+```
+<br> 
+
+Distribution of individuals according to their field of study (greater opacity reflects lower quality of projection): 
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res_zh, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "field", labels_size = 9, point_opacity = 0.5,
+    opacity_var = "Cos2", point_size = 64, ellipses = FALSE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-1.73, 2.48), ylim = c(-2.46, 1.75))
+```
+
+<br>
+Finally, we apply hierarchical clustering on all 27 dimensions. 
+
+```{r warning=FALSE, message=FALSE}
+res.HCPC_zh<-HCPC(res.mca_zh,nb.clust=10,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC_zh,choice='tree',title='Chinese AUM: Hierarchical tree')
+plot.HCPC(res.HCPC_zh,choice='map',draw.tree=FALSE,title='Chinese AUM: Factor Map')
+plot.HCPC(res.HCPC_zh,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='Chinese AUM: Hierarchical tree on factor Map')
+
+```
+
+<br> 
+Summary of results: 
+```{r}
+summary(res.HCPC_zh)
+```
+
+The partition is characterized, by decreasing order of importance, by the field of study, the workplace, the academic degree, the region and the period of study. The sector of employment did not play a significant part in the partition. 
+
+The algorithm detected 10 clusters: 
+	1.	returned students who worked outside of China (e.g. C.H. Wang)
+	2.	masters in sciences and commerce who worked in Shanghai (Paul Hsu Ho)
+	3.	Science graduates whose occupation and workplace remained undetermined (C.Y. Wang)
+	4.	Bachelors in the humanities from the Pacific coast employed in non-profit organizations (T. Tsufan Lee)
+	5.	Students in minor fields of study (architecture, education, theology) during the last period (1919-1935) (Robert Fan, Poy Gum Lee)
+	6.	Certified engineers who graduated during the second period (1909-1918) (Tsu Hsien Lee)
+	7.	Unknown curricula: pioneering/early returned students (who graduated before 1909) employed by the central government in Nanjing  (Chun Chen)
+	8.	Individuals who studied in the Southeast and worked in cities other than Shanghai and Nanjing in China (Yung Ching Yang, Tsiang K.S.)
+	9.	Doctors in law and medicine whose sector of employment was not documented (probably independent practitioners) (W.S. Fu, Li Kang, S.T. Woon H.L. Yen)
+	10.	Individuals whose period of graduation was unknown, who worked in miscellaneous sectors in cities other than Shanghai and Nanjing in China (T.E. Mao)
+
+## Foreigners 
+
+Last, we apply MCA to our population of foreign graduates: 
+
+```{r warning=FALSE, message=FALSE}
+
+res.mca_for <- MCA(highest_uniq_mca_foreign_tbl, graph = FALSE)
+
+```
+<br>
+
+Let's plot the results: 
+```{r warning=FALSE, message=FALSE}
+plot.MCA(res.mca_for, choix='var',title="Foreign AUM: Graph of variables",col.var=c(1,2,3,4,5,6))
+plot.MCA(res.mca_for,invisible= 'ind',selectMod= 'cos2 0.05',col.var=c(1,1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6),title="Foreign AUM: MCA Graph",label =c('var'))
+```
+<br>
+Altogether, the two first dimensions capture almost 16.5% of information (8.4% on the first dimension, 8% on the second), which is not so bad given the high number of variables and values in the dataset. Eight dimensions are necessary to capture at least 50% of information, 15 dimensions to retain 75% of information, and 28 for having 100%. 
+
+The field of study and the degree are the best projected variables on the two dimensions (over 0.75). The sector of employment is better projected on the first dimension (almost 0.5). The period of graduation is better - though poorly - projected  on the first dimension (0.3). The two remaining variables (region, city) are poorly projected on the two dimensions. 
+
+As for Chinese graduates, the  first dimension opposes doctors in medicine or other fields (theology) on the right, and bachelor in sciences or the humanities on the left. The second dimension further separates certified engineers and undetermined curricula (below) from other curricula (above). The former group was employed by the central government or educational institutions. The latter worked in private companies or other sectors.  Medical doctors, were more likely to work in non-profit organizations. The first dimension also opposes early higher graduates (1883-1908) and latecomers (1919-1935) with lower level of qualification on the left. 
+
+We can launch *explor* to interact with the graph: 
+```{r eval = FALSE, warning=FALSE, message=FALSE}
+explor(res.mca_for)
+```
+
+```{r warning=FALSE, message=FALSE}
+
+res_for <- explor::prepare_results(res.mca_for)
+explor::MCA_var_plot(res_for, xax = 1, yax = 2, var_sup = FALSE, var_sup_choice = ,
+    var_lab_min_contrib = 0, col_var = "Variable", symbol_var = NULL, size_var = "Contrib",
+    size_range = c(52.5, 700), labels_size = 10, point_size = 56, transitions = TRUE,
+    labels_positions = "auto", labels_prepend_var = FALSE, xlim = c(-1.85, 4.45),
+    ylim = c(-2.92, 3.37))
+
+```
+
+<br> 
+
+Distribution of individuals according to their level of qualification (greater opacity reflects lower quality of projection):
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res_for, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "degree", labels_size = 9, point_opacity = 0.5,
+    opacity_var = "Cos2", point_size = 64, ellipses = TRUE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-1.41, 3.1), ylim = c(-2.11, 2.39))
+```
+<br> 
+
+Distribution of individuals according to their field of study (greater opacity reflects lower quality of projection):
+```{r warning=FALSE, message=FALSE}
+explor::MCA_ind_plot(res_for, xax = 1, yax = 2, ind_sup = FALSE, lab_var = NULL,
+    ind_lab_min_contrib = 0, col_var = "field", labels_size = 9, point_opacity = 0.5,
+    opacity_var = "Cos2", point_size = 64, ellipses = FALSE, transitions = TRUE,
+    labels_positions = NULL, xlim = c(-1.41, 3.1), ylim = c(-2.11, 2.39))
+```
+
+<br>
+Finally, we apply hierarchical clustering on all 28 dimensions: 
+
+```{r warning=FALSE, message=FALSE}
+
+res.mca<-MCA(highest_uniq_mca_foreign_tbl,ncp=28,graph=FALSE)
+res.HCPC<-HCPC(res.MCA,nb.clust=4,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC,choice='tree',title='Arbre hiérarchique')
+plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Plan factoriel')
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='Arbre hiérarchique sur le plan factoriel')
+
+```
+
+<br>
+The partition is strongly characterized, by decreasing order of importance, by the degree, the field of study and the sector of employment. The period of graduation remains insignificant. 
+
+The algorithm detected 4 clusters: 
+
+	1.	Certified engineers from the East coast working for the private sector (e.g. Conrad)
+	2.	Bachelors in sciences or the humanities working for foreign governments in China (e.g. Hillhouse)
+	3.	Educators with undetermined curricula (e.g. Howe)
+	4.	Doctors in medicine or theology with undetermined occupations (e.g. Ridgway)
+	
+	<br> 
+Summary of results: 
+```{r}
+summary(res.HCPC)
+```
+
+# References 
+
+Ryan Deschamps, "Correspondence Analysis for Historical Research with R," The Programming Historian 6 (2017), https://doi.org/10.46430/phen0062. 

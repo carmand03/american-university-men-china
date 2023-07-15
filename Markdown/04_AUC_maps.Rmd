@@ -1,0 +1,524 @@
+---
+title: "American University Men in China (1936)"
+subtitle: "Mapping the geographies of education and employment"
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This essay relies on various mapping packages to map the geographical patterns of education and employment of the American University Men of China 
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    theme: readable # all theme -> https://bootswatch.com/3/
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, echo=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(maps)
+library(leaflet)
+library(plotly)
+library(knitr)
+library(kableExtra)
+library(DT)
+```
+
+# Prologue
+
+This essay aims to map the geographies of education and employment of the American University Men in China. Where did they study, in which part of the United States? Where did they worked at the time when the directory was compiled (1936)? Did the Chinese and foreign members present different geographical patterns in their education and/or occupation?  
+
+To address these questions, we will create three distinct types of maps, each best suited to the data and kind of spatial pattern we seek to represent: 
+
+  * static maps to represent the aggregate data (all nationalities and all period, all period for each group)
+  * animated maps (series of three static maps), one for each period, to trace changes over time
+  * interactive maps, to combine both functionalities and represent static and temporal attributes simultaneously. 
+  
+# Prepare data
+
+We load the data: list of state with the number of graduates by period and for each national group, as well as the aggregate number of degrees for each group during the entire period and all nationality and period included: 
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+aucstate_map <- read_csv("Data/aucstate_map.csv",
+col_types = cols(X1 = col_skip()))
+
+```
+<br>
+
+
+We load the mapping packages:  
+
+```{r warning=FALSE, message=FALSE}
+
+library(tmap) # to create layers 
+library(sf)   # for handling spatial (vector) data  
+library(spData) # to load states data   
+library(ggplot2)
+library(grid)   # to re-arrange maps
+
+```
+
+<br>
+We load the states data which we transform into a st object: 
+
+```{r warning=FALSE, message=FALSE}
+
+us_states2163 = st_transform(us_states, 2163)
+
+```
+<br>
+
+We rename the variable "State" for making merging easier and merge with our data: 
+
+```{r warning=FALSE, message=FALSE}
+
+aucstate_map <- aucstate_map %>% mutate(NAME = State)
+deg_state <- inner_join(us_states2163, aucstate_map, by = "NAME")
+
+```
+
+<br> 
+First, we will map the geographies of education (degrees granted by each state), then the geographies of employment (workplaces - cities). We will use tmap for static map and leaftlet for interactive maps. 
+
+# Education (states) 
+
+```{r warning=FALSE, message=FALSE}
+library(tmap)
+library(ggplot2)
+```
+
+Create base map: 
+
+
+```{r warning=FALSE, message=FALSE}
+tm_shape(deg_state) +
+  tm_borders() +
+  tm_fill() + 
+  tm_layout(frame = TRUE)
+```
+<br>
+
+Map all degrees granted (all degrees granted by each state, regardless of students' nationality): 
+
+```{r warning=FALSE, message=FALSE}
+# set breaks
+breaks = c(0, 10, 25, 50, 150)
+# set legend title
+legend_title = "All degrees"
+# add layers to create map
+map_all <- tm_shape(deg_state) +   
+  tm_borders() +
+  tm_polygons(col = "DegreeTotal", breaks = breaks, title = legend_title, palette = "BuGn") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+<br>
+
+## Nationality 
+
+Map the degrees granted to Chinese students only (we use the same breaks to facilitate comparisons):  
+
+```{r warning=FALSE, message=FALSE}
+# set legend title
+legend_zh = "Chinese degrees"
+# add layers to create map
+degzh <- deg_state %>%   
+  filter(Chinese >0)
+map_zh <- tm_shape(degzh) +
+  tm_polygons(col = "Chinese", breaks = breaks, title = legend_zh, palette = "YlOrBr") +  
+  tm_borders() +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+<br> 
+Map the degrees granted to non-Chinese students (Westerners and Japanese): 
+
+```{r warning=FALSE, message=FALSE}
+# set legend title
+legend_for = "Foreign degrees"
+# add layers to create map
+degfor <- deg_state %>%   
+  filter(Other >0)
+map_foreign <- tm_shape(degfor) +   
+  tm_borders() +
+  tm_polygons(col = "Other", breaks = breaks, title = legend_for, palette = "Blues") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+<br>
+
+Facets: 
+```{r warning=FALSE, message=FALSE}
+par(mfrow = c(3,1))
+map_all
+map_zh
+map_foreign
+
+```
+
+<br>
+The most striking observation when we compare the map of Chinese graduates with the map of foreign or all degrees, is the higher concentration/polarization of Chinese degrees in a limited number of granting states (24). By contrast, foreign graduates were more widely scattered across a larger number of states (40). Some states were clearly missing on all three maps (Idaho, Nevada, Utah, Arkansas). They reflected the contemporary blank spots in the geography of higher education in the United States, which largely persist today.  
+
+The map of Chinese graduates showed a clear pattern of polarization in two core areas - the Northeast and California on the Pacific Coast (29). In the Northeast, New York State clearly dominated with 103 degrees. The next group of states totalling 25 to 50 degrees each included Massachusetts (49) and Pennsylvania (42) on the East coast, Illinois (43) and Michigan (28) in the Midwest. The third group of states that granted from 5 to 10 degrees each were all located in the Midwest, except for the District of Columbia (DC) and New Jersey. The remaining states delivered less than 5 degrees and were scattered across the rest of the country. Altogether the 10 first states (New York, Mass., Illinois, Pennsylvania, California, Michigan, Connecticut) delivered 87% of all degrees granted to Chinese students. If we remove California and retain only Northeastern and Midwestern states, they amounted for 80%.
+
+The map of foreign graduates presented a similar though weaker pattern of concentration in the Northeast and California. Besides the greater dispersal, the main differences with Chinese graduates was the larger number of graduates from New Jersey (Princeton) (19 against 5) and the District of Columbia (Georgetown, George Washington, Howard) (13 against 6). On the opposite, there were fewer foreign graduates from Iowa (4 against 10). 
+
+## Periodization
+
+
+How did this geography change over time? We will create three successive maps, one for each period. We will focus on Chinese graduates. First we split the data into three periods
+
+```{r warning=FALSE, message=FALSE}
+zh_period_1 <- degzh %>%   
+  filter(`1883-1908_Chinese` >0)
+
+zh_period_2 <- degzh %>%   
+  filter(`1909-1918_Chinese` >0)
+
+zh_period_3 <- degzh %>%   
+  filter(`1919-1935_Chinese` >0)
+```
+
+<br>
+Then we create the maps: 
+```{r warning=FALSE, message=FALSE}
+# set breaks
+breaks = c(0, 10, 25, 50, 150)
+# set legend title
+legend_title = "1883-1908"
+# add layers to create map
+map_zh_period_1 <- tm_shape(zh_period_1) +   
+  tm_borders() +
+  tm_polygons(col = "1883-1908_Chinese", breaks = breaks, title = legend_title, palette = "YlOrBr") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+```{r warning=FALSE, message=FALSE}
+# set breaks
+breaks = c(0, 10, 25, 50, 150)
+# set legend title
+legend_title2 = "1909-1918"
+# add layers to create map
+map_zh_period_2 <- tm_shape(zh_period_2) +   
+  tm_borders() +
+  tm_polygons(col = "1909-1918_Chinese", breaks = breaks, title = legend_title2, palette = "YlOrBr") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+
+```{r warning=FALSE, message=FALSE}
+# set breaks
+breaks = c(0, 10, 25, 50, 150)
+# set legend title
+legend_title3 = "1919-1935"
+# add layers to create map
+map_zh_period_3 <- tm_shape(zh_period_3) +   
+  tm_borders() +
+  tm_polygons(col = "1919-1935_Chinese", breaks = breaks, title = legend_title3, palette = "YlOrBr") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+<br>
+
+Facets: 
+```{r warning=FALSE, message=FALSE}
+par(mfrow = c(1,3))
+map_zh_period_1
+map_zh_period_2
+map_zh_period_3
+
+```
+<br>
+The three successive maps reveal a dual process of expansion/dissemination from the two original poles (Northeast/California) towards the Midwest, and at the same time, the increasing concentration in the Northeast, especially New York, Massachusetts, Pennsylvania, Illinois, and Michigan during the last phase. This trend partly reflects the turn towards technical disciplines during the Republic, especially after 1928. The three states of Massachusetts, Michigan and Illinois concentrated the majority of engineering programs and institutes of technology in the United States. 
+
+## Highest degrees 
+
+We load the list of higher degrees and we select the relevant variables only:  
+
+```{r warning=FALSE, message=FALSE}
+library(readr)
+highest_uniq <- read_delim("Data/highest_uniq.csv",
+";", escape_double = FALSE, trim_ws = TRUE)
+
+highest_map <- highest_uniq %>% select(Name_eng, Nationality, State, Field_main, Degree_level, period)
+
+datatable(highest_map)
+
+```
+
+<br>
+
+
+We compute the number of degrees granted by each state for each national groups, and all national groups included: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_map_count_zh <- highest_map %>% 
+  filter(Nationality == "Chinese") %>% 
+  group_by(State) %>% 
+  add_tally() %>% 
+  rename(Chinese_total = n) %>% 
+  distinct(State, Chinese_total)
+
+highest_map_count_for <- highest_map %>% 
+  filter(Nationality != "Chinese") %>% 
+  group_by(State) %>% 
+  add_tally() %>% 
+  rename(Foreign_total = n) %>% 
+  distinct(State, Foreign_total)
+
+highest_map_count_all <- highest_map %>% 
+  group_by(State) %>% 
+  add_tally() %>% 
+  rename(Total = n) %>% 
+  distinct(State, Total)
+
+highest_map_count <- full_join(highest_map_count_zh, highest_map_count_for, by = "State")
+highest_map_count <- full_join(highest_map_count, highest_map_count_all, by = "State")
+
+```
+<br>
+
+We load the states data which we transform into a "st" object: 
+
+```{r warning=FALSE, message=FALSE}
+
+us_states2163 = st_transform(us_states, 2163)
+
+```
+<br>
+
+
+We rename the variable "State" for making merging easier and merge with our data: 
+
+```{r warning=FALSE, message=FALSE}
+
+highest_map_count <- highest_map_count %>% mutate(NAME = State)
+high_state_count <- inner_join(us_states2163, highest_map_count, by = "NAME")
+high_state_count[is.na(high_state_count)] <- 0 # we replace NA with O
+```
+
+<br>
+Finally we map the highest degrees granted in each state to all students, to Chinese and to foreign graduates only: 
+
+```{r warning=FALSE, message=FALSE}
+
+# we reset the breaks to lower figures
+breaks2 = c(0, 5, 10, 25, 50, 100)
+
+# set legend title
+legend_title2 = "Highest degrees (all)"
+# add layers to create map
+map_high_all <- tm_shape(high_state_count) +   
+  tm_borders() +
+  tm_polygons(col = "Total", breaks = breaks2, title = legend_title2, palette = "BuGn") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+
+```
+
+
+```{r warning=FALSE, message=FALSE}
+legend_zh2 = "Highest degrees (Chinese)"
+# add layers to create map
+degzh_high <- high_state_count %>%   
+  filter(Chinese_total >0)
+map_high_zh <- tm_shape(degzh_high) +
+  tm_polygons(col = "Chinese_total", breaks = breaks2, title = legend_zh2, palette = "YlOrBr") +  
+  tm_borders() +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+```
+
+
+```{r warning=FALSE, message=FALSE}
+# set legend title
+legend_for2 = "Highest degrees (Foreign)"
+# add layers to create map
+mapfor_high <- high_state_count %>%   
+  filter(Foreign_total >0)
+map_high_foreign <- tm_shape(mapfor_high) +   
+  tm_borders() +
+  tm_polygons(col = "Foreign_total", breaks = breaks2, title = legend_for2, palette = "Blues") +
+  tm_layout(frame = TRUE, legend.outside = TRUE) + 
+  tm_compass(type = "8star", position = c("left", "top"), size = 1) +
+  tm_scale_bar(width = 0.2, position = c("left", "bottom"), text.size = 2)
+
+```
+<br>
+
+
+Facets: 
+```{r warning=FALSE, message=FALSE}
+par(mfrow = c(3,1))
+map_high_all
+map_high_zh
+map_high_foreign
+
+```
+
+# Employment (cities)
+
+## Prepare data 
+
+ 
+Load city data: 
+```{r warning=FALSE, message=FALSE}
+
+# load data 
+
+library(readr)
+aucdata <- read_csv("Data/aucdata.csv", col_types = cols(X1 = col_skip()))
+library(readr)
+cityjoin <- read_delim("Data/cityjoin.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+
+# load package
+
+library(maps)
+
+auc_city <- aucdata %>% select(Name_eng, Nationality, Employer_main, Sector_1, Sector_2, City, Country)
+auc_city2 <- inner_join(auc_city, cityjoin, by = "City")
+auc_city4 <- inner_join(auc_city2, world.cities, by = "name", "lat")
+auc_city4 <- auc_city4 %>% distinct(Name_eng, Nationality, Employer_main, Sector_1, Sector_2, City, Country.x, name, country.etc, lat.x, long)  %>% rename(country = Country.x, lat = lat.x)
+auc_city4 <- auc_city4 %>% distinct(Name_eng, Nationality, Employer_main, Sector_1, Sector_2, City, country, name, country.etc, lat, long)
+```
+
+<br>
+Compute number of individuals per city: 
+```{r warning=FALSE, message=FALSE}
+auc_city_count_all <- auc_city4 %>% 
+  group_by(name) %>% add_tally() %>% 
+  rename(Total = n) %>% 
+  distinct(name, lat, long, Total)
+# Chinese
+auc_city_count_zh <- auc_city4 %>% 
+  filter(Nationality == "Chinese") %>% 
+  group_by(name) %>% add_tally() %>% 
+  rename(Chinese = n) %>% distinct(name, lat, long, Chinese)
+# non-Chinese
+auc_city_count_for <- auc_city4 %>% 
+  filter(Nationality != "Chinese") %>% 
+  group_by(name) %>% 
+  add_tally() %>% rename(Foreign = n) %>% 
+  distinct(name, lat, long, Foreign)
+auc_city_count <- full_join(auc_city_count_zh, auc_city_count_for)
+auc_city_count <- full_join(auc_city_count, auc_city_count_all)
+# replace NA by O 
+auc_city_count[is.na(auc_city_count)] <- 0
+# remove duplicates with wrong coordinates 
+auc_city_count <- auc_city_count %>% filter(!long %in% c(-57.61, -95.15, 117.00))
+
+```
+
+## Build maps
+
+```{r warning=FALSE, message=FALSE}
+# load packages
+library(ggmap)
+library(forcats)
+# load world data (background)
+map_world <- map_data("world")
+```
+
+### All workplaces
+
+```{r warning=FALSE, message=FALSE}
+breaks = c(0, 10, 300)
+p1 <- auc_city_count %>% filter(Total >0) %>% 
+  ggplot() +
+  geom_polygon(data = map_world, aes(x = long, y = lat, group = group), fill = "grey") +
+  geom_point(aes(x = long, y = lat, size = Total),
+                label = "name",
+                alpha = .6, color = "darkgreen") +
+  scale_size(breaks = breaks, range = c(2,6)) + 
+  labs(title = "American University Men in China: Workplace (1936)", 
+       size = "Number of individuals employed")
+
+fig1 <- ggplotly(p1)
+fig1
+
+```
+
+### Chinese workplaces
+
+```{r warning=FALSE, message=FALSE}
+
+breaks_zh = c(0, 10, 200)
+p2 <- auc_city_count %>% filter(Chinese >0) %>% 
+  ggplot() +
+  geom_polygon(data = map_world, aes(x = long, y = lat, group = group), fill = "grey") +
+  geom_point(aes(x = long, y = lat, size = Chinese),
+             alpha = .6, color = "red")+
+  scale_size(breaks = breaks_zh, range = c(2,7))+
+  labs(title = "American University Men in China (Chinese): Workplace (1936)",
+       subtitle = "Chinese graduates", 
+       size = "Number of individuals employed")
+
+fig2 <- ggplotly(p2)
+fig2
+```
+
+### Foreigners' workplaces
+
+```{r warning=FALSE, message=FALSE}
+
+breaks_f = c(0, 10, 100)
+p3 <- auc_city_count %>% 
+  filter(Foreign >0) %>% 
+  ggplot() +
+  geom_polygon(data = map_world, aes(x = long, y = lat, group = group), fill = "grey") +
+  geom_point(aes(x = long, y = lat, size = Foreign),
+             label = "name",
+             alpha = .6, color = "blue", show.legend = TRUE) +
+  scale_size(breaks = breaks_f, range = c(2,6)) + 
+  labs(title = "American University Men in China (Foreign): Workplace (1936)",
+       subtitle = "Foreign graduates", 
+       size = "Number of individuals employed")
+
+fig3 <- ggplotly(p3)
+fig3
+
+```
+
+
+<br>
+Since the American University Club was based in Shanghai, most of its members worked in this city. Outside Shanghai, they were unevenly distributed between China and the United States (and a few in Singapore). Chinese and foreign members displayed different geographical patterns. In the United States, Chinese worked exclusively in New York, whereas foreigners worked on the Pacific Coast (Pasadena, California). This largely mirrored the geography of education. In China, foreigners congregated in two main cities: Shanghai and Beijing, which reflected their service in foreign institutions. By contrast, Chinese graduates served the central government of the Nationalist regime based in Nanjing. Moreover, they were scattered across a wider range of cities throughout China, mostly in southeastern provinces and in cities no smaller than county seats.  
+
+# References 
+
+Lovelace, Robin, Jakub Nowosad and Jannes Muenchow (2019). Geocomputation with R. The R Series. CRC Press. https://geocompr.robinlovelace.net/ 
+
+https://www.r-bloggers.com/2012/12/us-state-maps-using-map_data/
+
+https://gist.github.com/cdesante/4252133

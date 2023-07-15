@@ -1,0 +1,973 @@
+---
+title: "A place-based study of alumni networks in modern China (2)"
+subtitle: "From places to networks (a dual approach)" 
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This tutorial series applies a place-based methodology to study Sino-American alumni networks in modern China, based on a directory of the American University Club of Shanghai published in 1936. In this second instalment, we use igraph to build, visualize and analyze place-based networks  
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(Places)
+library(igraph)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+
+
+In the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places1.html), we learnt how to find places (defined as patterns of academic curricula) from a two-mode relational dataset linking students' with the colleges they attended in the United States. In this new instalment, we will use a dual approach to conduct a joint analysis of the network of places linked by universities, and its transposed version - the network of universities linked by places, as shown on [fig. 2](https://bookdown.enpchina.eu/AUC/Places1.html). Through this joint network analysis, we aim to better understand how academic curricula were connected through universities, and conversely, how the universities were interconnected through students' trajectories. By jointly analyzing the two networks, we adapt Everett and Borgatti’s dual-projection approach to places ^[Everett, Martin & Borgatti, Stephen. (2013). The dual-projection approach for two-mode networks. Social Networks. 35. 204-210. 10.1016/j.socnet.2012.05.004.] in order to take advantage of the duality property of place-based networks emphasized by Pizarro (Pizarro, 2000, 2002). 
+In this tutorial, we rely on [igraph](https://igraph.org/) to build and visualize the networks, analyze their global structure, and extract some local features (centrality measures) to examine the nodes relative position in the networks. In the last section, we rely on principal component analysis (PCA) and hierarchical clustering (HCPC) to identify positional profiles, based on the nodes' centrality measures and other qualitative attributes. 
+
+# Recap
+
+**Summary of previous steps**
+
+```{r warning = FALSE, message = FALSE}
+
+# load packages
+
+library(Places)
+library(tidyverse)
+
+# load original data 
+
+aucplaces <- read_delim("Data/aucdata.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+aucplaces <- as.data.frame(aucplaces) 
+
+# retrieve places 
+
+Result1 <- places(aucplaces, "Name_eng", "University")
+result1df <- as.data.frame(Result1$PlacesData) 
+
+# load annotated data (places manually labeled wit qualitative attributes)
+
+place_attributes <- read_csv("Data/place_attributes.csv",
+col_types = cols(...1 = col_skip())) # manually labeled places
+
+# load university data (region)
+
+univ_region <- read_delim("Data/univ_region.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+
+```
+
+# Create networks 
+
+The results of place detection performed with  ["Places"](http://lereps.sciencespo-toulouse.fr/new-r-package-places-structural-equivalence-analysis-for-two-mode-networks) include an edge list of places linked by sets (Edgelist). We will use this list to build both the network of places linked by universities (sets), and the transposed network of universities (sets) linked by places. 
+
+To build a network of places linked by universities: 
+```{r warning = FALSE, message = FALSE}
+
+# First, we build an adjacency matrix from the edgelist contained in the results of place detection:
+
+bimod<-table(Result1$Edgelist$Places, Result1$Edgelist$Set) 
+PlacesMat<-bimod %*% t(bimod)
+diag(PlacesMat)<-0 
+
+# Next, we use igraph to create a network from the adjacency matrix:
+
+library(igraph)
+Pla1Net<-graph_from_adjacency_matrix(PlacesMat, mode="undirected", weighted = TRUE)
+
+```
+<br>
+We apply the same method for building the transposed network of universities linked by places: 
+```{r warning = FALSE, message = FALSE}
+
+# create the adjacency matrix
+bimod2<-table(Result1$Edgelist$Set, Result1$Edgelist$Places)
+PlacesMat2<-bimod2 %*% t(bimod2)
+diag(PlacesMat2)<-0
+
+# build network from adjacency matrix with igraph
+Pla2Net<-graph_from_adjacency_matrix(PlacesMat2, mode="undirected", weighted = TRUE)
+
+
+```
+<br>
+Note: we can further convert the igraph object into an edge list that can be exported and re-used in network analysis software such as Gephi or Cytoscape: 
+```{r warning = FALSE, message = FALSE}
+
+# convert igraph object into edge list 
+edgelist1 <- as_edgelist(Pla1Net)
+edgelist2 <- as_edgelist(Pla2Net)
+# export edge lists and node list as csv files
+write.csv(edgelist1, "edgelist1.csv")
+write.csv(result1df, "nodelist1.csv")
+write.csv(edgelist2, "edgelist2.csv")
+
+```
+
+# Visualize 
+
+Plot the network graphs with igraph: 
+```{r warning = FALSE, message = FALSE}
+
+plot(Pla1Net, vertex.size = 5, 
+     vertex.color = "orange", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of places linked by universities")
+
+
+plot(Pla2Net, vertex.size = 5, 
+     vertex.color = "light blue", 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of universities linked by places")
+
+```
+
+<br>
+The two networks are composed of a large and densely connected component, surrounded by a myriad of isolated nodes and smaller components, which refer to the singular curricula we described in the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places1.html). We will now use basic network metrics to substantiate these preliminiary  visual impressions.  
+
+# Basic analysis
+
+<br> 
+**Network of places**  
+```{r warning = FALSE, message = FALSE}
+
+summary(Pla1Net) # 223  places, 1601  ties 
+graph.density(Pla1Net) # density: 0.06467903
+no.clusters(Pla1Net) # number of components: 40
+clusters(Pla1Net)$csize # size of components (one big connected component with 183 nodes
+table(E(Pla1Net)$weight) # edge weight 
+
+```
+<br>
+The network of places contains 223 nodes (places = academic trajectories) and 1601 edges (universities). It has a density of 0.065. It is made up of 40 components, including one large component with 183 nodes, one dyad (2 nodes) and 38 isolated nodes. 12 edges have a weight of two, meaning that 12 pairs of places are connected by two distinct universities. The remaining 1589 edges are simple edges (with a weight of one, meaning that these universities are the only link between the places they connect. 
+
+```{r warning = FALSE, message = FALSE}
+# select edges with weight >1 (or weight = 2)
+E(Pla1Net)[weight > 1]
+E(Pla1Net)[weight == 2]
+```
+
+<br>
+**Network of universities linked by places**
+```{r warning = FALSE, message = FALSE}
+Pla2Net 
+summary(Pla2Net) # 223  places, 1601  ties 
+graph.density(Pla2Net) # 0.01835803
+no.clusters(Pla2Net) # number of components : 40
+clusters(Pla2Net)$csize # size of components 
+table(E(Pla2Net)$weight) # edge weight 
+```
+<br>
+The network of universities linked by places contains 147 nodes (universities) and 197 edges (places = academic trajectories). Like its transposed version (network of places), it is made up of 40 components, but it is much less dense (0.018). The largest component includes 104 nodes (universities). The remaining components consist of one triangle (3 nodes), two dyads (pairs of nodes) and 36 isolated nodes (universities). One edge (place) has a weight of 4, meaning that one pair of universities (Columbia-NYU) is linked by four distinct places (academic trajectories). Six edges have a weight of 2, meaning that each of the six pairs of universities is linked by two distinct places (academic trajectories). The remaining 190 edges are simple edges (with a weight of 1), meaning that each of these places is the only link between the universities they connect. 
+
+```{r warning = FALSE, message = FALSE}
+
+# select edges with weight >1
+E(Pla2Net)[weight > 1]
+E(Pla2Net)[weight == 2]
+E(Pla2Net)[weight == 3]
+E(Pla2Net)[weight == 4] # Columbia--New York University
+```
+<br>
+In the following, we will focus on the main components. 
+
+Extract and plot the main component (MC) in the network of places: 
+```{r warning = FALSE, message = FALSE}
+# extract main component (MC = main component)
+Pla1NetMC <- induced.subgraph(Pla1Net,vids=clusters(Pla1Net)$membership==1)
+summary(Pla1NetMC) # 183 nodes (places), 1600  edges (universities)
+```
+<br>
+Extract and plot the main component (MC) in the transposed network of universities: 
+```{r warning = FALSE, message = FALSE}
+Pla2NetMC <- induced.subgraph(Pla2Net,vids=clusters(Pla2Net)$membership==3)
+summary(Pla2NetMC) # 104 nodes (universities), 192  edges (places)
+```
+<br>
+In the network of places, the main component contains 183 nodes (places) and 1600 edges (universities). In the network of universities, the main component contains 104 nodes (universities) and 192 edges (places).
+
+Plot the main components: 
+```{r warning = FALSE, message = FALSE}
+
+plot(Pla1NetMC,
+     vertex.color="orange",
+     vertex.size = 7, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of places (main component)")
+
+
+plot(Pla2NetMC, 
+     vertex.color = "light blue", 
+     vertex.size = 7, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of universities (main component)") 
+
+
+```
+
+
+# Cut points
+
+Articulation points (or cut points) are points in a connected space (e.g. nodes in a network) such that their removal cause the resulting space (network) to be disconnected. 
+
+What are the cutpoints in the network of places? 
+```{r warning = FALSE, message = FALSE}
+articulation.points(Pla1NetMC)
+
+cutpointsMC <- Pla1NetMC %>%
+  articulation_points() %>%
+  as.list() %>%
+  names() %>%
+  as.data.frame() %>%
+  `colnames<-`("Cut.Points")
+
+cutpointsMC <- cutpointsMC %>% rename(PlaceLabel = Cut.Points)
+```
+
+
+```{r warning = FALSE, message = FALSE}
+cutpointsMCjoin <- inner_join(cutpointsMC, result1df, by = "PlaceLabel") # join with place detail
+
+kable(cutpointsMCjoin, caption = "The 19 articulation points in the network of places") %>%
+  kable_styling(bootstrap_options = "striped", full_width = T, position = "left")
+
+```
+<br>
+The articulation points in the network of places refer to single-student places focused on just one individual who attended from 2 to 4 colleges. In general, the set of colleges includes at least one prestigiou institution (e.g. Chicago, Columbia, Cornell, Yale) and one or more peripheral ones (e.g. Emporia College, Vanderbilt, New Bedford, Reed, Rensselaer Polytechnic Institute). A few places, however, include individuals (mostly non-Chinese) who attend only atypical colleges, but who through their academic trajectories nonetheless occupied a pivotal position in the alumni network: Ernest Villers (P020), Arthur Young (P023), Leo W. Yu (P024) or Carl Christopherson (P054). Except for these four cases, all other cutpoints include at least one major university (Columbia, Harvard, Pennsylvania, Chicago, Yale, NYU, Princeton, MIT, Cornell, Illinois) located on the East Coast or in neighboring states.
+
+We can highlight these cutpoints in the network: 
+```{r warning = FALSE, message = FALSE}
+
+V(Pla1Net)$shape = ifelse(V(Pla1Net) %in%
+                            articulation_points(Pla1Net),   
+                          "square", "circle")
+
+V(Pla1Net)$color= ifelse(V(Pla1Net) %in%
+                            articulation_points(Pla1Net),   
+                          "red","orange")
+
+plot(Pla1Net, vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     vertex.color = V(Pla1Net)$color, 
+     vertex.shape = V(Pla1Net)$shape, 
+     vertex.size =5, 
+     main = "Network of places",
+     sub = "Red squares refer to cutpoints")
+```
+<br>
+
+Similarly, what are the cutpoints in the transposed network of universities?  
+```{r warning = FALSE, message = FALSE}
+
+articulation.points(Pla2Net)
+
+cutpoints2MC <- Pla2NetMC %>%
+  articulation_points() %>%
+  as.list() %>%
+  names() %>%
+  as.data.frame() %>%
+  `colnames<-`("Cut.Points")
+
+```
+<br>
+Highlight cut points in the network: 
+```{r warning = FALSE, message = FALSE}
+
+V(Pla2Net)$shape = ifelse(V(Pla2Net) %in%
+                            articulation_points(Pla2Net),   
+                          "square", "circle")
+
+V(Pla2Net)$color= ifelse(V(Pla2Net) %in%
+                            articulation_points(Pla2Net),   
+                          "steelblue","lightblue")
+
+plot(Pla2Net, vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     vertex.color = V(Pla2Net)$color, 
+     vertex.shape = V(Pla2Net)$shape, 
+     vertex.size =5, 
+     main = "Network of universities", 
+     sub = "Dark squares refer to cutpoints")
+```
+
+<br>
+Interestingly, many of the college-cutpoints identified in the network of colleges appear in the place-cutpoints identified in the network of places. Again, this result illustrates the duality of place-based networks. 
+
+We can further extract and plot cutpoints' ego networks in order to better visualize their position and understand how they bridge important sections in the networks.
+
+For example, let's focus on the college-cutpoint "Emporia College": 
+```{r warning = FALSE, message = FALSE}
+
+# extract Emporia ego network 
+
+ego21 <- subgraph.edges(Pla2Net, E(Pla2Net)[inc(V(Pla2Net)[name == "Emporia College"])])
+
+# plot the subgraph
+
+V(ego21)$shape = ifelse(V(ego21)$name == "Emporia College",   
+                          "square", "circle")
+
+V(ego21)$color= ifelse(V(ego21)$name == "Emporia College",   
+                          "steelblue", "lightblue")
+
+plot(ego21, main = "Emporia College ego-network", 
+     vertex.color = V(ego21)$color, 
+     vertex.shape= V(ego21)$shape,  
+     vertex.label.color = "black")
+```
+<br>
+Emporia College bridges two minor colleges (Pittsburg Theological Seminary and Park University) with one important college (Chicago) that serves as gateway to the main component. 
+
+Extend to its immediate neighborhood: 
+```{r warning = FALSE, message = FALSE}
+
+egoneigh21 <- ego(Pla2Net, order=1, nodes = (V(Pla2Net)[name == "Emporia College"]), mode = "all", mindist = 0)
+
+selegoG21 <- induced_subgraph(Pla2Net,unlist(egoneigh21)) # turn the returned list of igraph.vs objects into a graph
+
+V(selegoG21)$shape = ifelse(V(selegoG21)$name == "Emporia College",   
+                          "square", "circle")
+
+V(selegoG21)$color= ifelse(V(selegoG21)$name == "Emporia College",   
+                          "steelblue", "lightblue")
+
+plot(selegoG21, vertex.label=V(selegoG21)$name,
+     vertex.color = V(selegoG21)$color, 
+     vertex.shape=V(selegoG21)$shape,  
+     vertex.label.color = "black") # plot the subgraph
+```
+<br>
+Extend to further neighbors (2 paths): 
+```{r warning = FALSE, message = FALSE}
+
+egoneigh21n2 <- ego(Pla2Net, order=2, nodes = (V(Pla2Net)[name == "Emporia College"]), mode = "all", mindist = 0) # two-path neighbors
+
+selegoG21n2 <- induced_subgraph(Pla2Net,unlist(egoneigh21n2))
+
+V(selegoG21n2)$shape = ifelse(V(selegoG21n2)$name == "Emporia College",   
+                          "square", "circle")
+
+V(selegoG21n2)$color= ifelse(V(selegoG21n2)$name == "Emporia College",   
+                          "steelblue", "lightblue")
+
+plot(selegoG21n2, vertex.label=V(selegoG21n2)$name, 
+     vertex.color =  V(selegoG21n2)$color, 
+     vertex.shape=V(selegoG21n2)$shape,  
+     vertex.size = 8, 
+     vertex.label.color = "black",
+     vertex.label.cex = 0.8) # plot the subgraph
+    
+```
+
+<br>
+We now focus on the corresponding cutpoint in the network of places (P021(1-3)): 
+```{r warning = FALSE, message = FALSE}
+
+# extract Emporia ego network 
+
+egop21 <- subgraph.edges(Pla1Net, E(Pla1Net)[inc(V(Pla1Net)[name == "P021(1-3)"])])
+
+# plot the subgraph
+
+V(egop21)$shape = ifelse(V(egop21)$name == "P021(1-3)",   
+                          "square", "circle")
+
+V(egop21)$color= ifelse(V(egop21)$name == "P021(1-3)",   
+                          "red", "orange")
+
+plot(egop21, main = "Walline's ego-network (Emporia graduate)", 
+     vertex.color=V(egop21)$color,
+     vertex.shape=V(egop21)$shape, 
+     vertex.label.color = "black",
+     vertex.size = 10,
+     vertex.label.cex = 0.8)
+```
+<br>
+We extend the ego-network to the immediate neighborhood: 
+```{r warning = FALSE, message = FALSE}
+
+egoneighp21 <- ego(Pla1Net, order=1, nodes = (V(Pla1Net)[name == "P021(1-3)"]), mode = "all", mindist = 0)
+
+selegopG21 <- induced_subgraph(Pla1Net,unlist(egoneighp21)) # turn the returned list of igraph.vs objects into a graph
+
+V(selegopG21)$shape = ifelse(V(selegopG21)$name == "P021(1-3)",   
+                          "square", "circle")
+
+V(selegopG21)$color= ifelse(V(selegopG21)$name == "P021(1-3)",   
+                          "red", "orange")
+
+plot(selegopG21, vertex.label=V(selegopG21)$name,
+    vertex.color=V(selegopG21)$color,
+     vertex.shape=V(selegopG21)$shape, 
+     vertex.size = 5, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5,
+     main = "Walline's extended ego-network") # plot the subgraph
+```
+<br>
+We include further neighbors (2 paths): 
+```{r warning = FALSE, message = FALSE}
+
+egoneighp21n2 <- ego(Pla1Net, order=2, nodes = (V(Pla1Net)[name == "P021(1-3)"]), mode = "all", mindist = 0) # two-path neighbors
+
+selegopG21n2 <- induced_subgraph(Pla1Net,unlist(egoneighp21n2))
+
+V(selegopG21n2)$shape = ifelse(V(selegopG21n2)$name == "P021(1-3)",   
+                          "square", "circle")
+
+V(selegopG21n2)$color= ifelse(V(selegopG21n2)$name == "P021(1-3)",   
+                          "red", "orange")
+
+plot(selegopG21n2, vertex.label=V(selegopG21n2)$name, 
+    vertex.color=V(selegopG21n2)$color,
+     vertex.shape=V(selegopG21n2)$shape,  
+     vertex.size = 5, 
+     vertex.label.color = "black",
+     vertex.label.cex = 0.5, 
+    main = "Walline's extended ego-network") # plot the subgraph
+    
+```
+
+
+# Local metrics (centrality)
+
+In order to analyze the nodes' relative positions in the networks, we combine various centrality measures, focusing on the main component:
+
+  * **Degree**: the number of ties a node has. It is the simplest measure of centrality. In the following, we use a normalized version of the measure in order enable comparisons across networks built from different data structure. 
+  * **Eigenvector**: the number of connections a node has to other well-connected nodes. It is a measure of the influence of a node in a network.
+  * **Betweenness**: the number of times a node acts as a bridge along the shortest path between two other nodes. In this sense, the more central a node is, the greater control it has over the flows that goes through it. It is often considered as a measure of brokerage, or the capacity of a node to mediate between other nodes. 
+  * **Closeness**: the average length of the shortest path between the node and all other nodes in the graph. In this sense, the more central a node is, the closer it is to all other nodes. 
+
+## Compile metrics
+
+```{r warning = FALSE, message = FALSE}
+Degree <- degree(Pla1NetMC, normalized = TRUE) # degree centrality
+Eig <- evcent(Pla1NetMC)$vector # eigenvector
+Betw <- betweenness(Pla1NetMC) # betweenness
+Close <- closeness(Pla1NetMC)  # closeness
+```
+<br>
+Finally, we compile all centrality measures in a single dataframe, which we further join with places details and attributes: 
+```{r warning = FALSE, message = FALSE}
+place_centralities <- cbind(Degree, Eig, Betw, Close) # compile
+place_centralities_df <- as.data.frame(place_centralities) # convert into dataframe
+place_centralities_df <- tibble::rownames_to_column(place_centralities_df, "PlaceLabel") # transform row names into column 
+place_centralities_df <- inner_join(place_centralities_df, place_attributes, by = "PlaceLabel")
+
+place_centralities_df
+
+```
+<br>
+Similarly, we compile centrality measures of for college-nodes in the transposed network of colleges linked by places: 
+```{r warning = FALSE, message = FALSE}
+Degree2 <- degree(Pla2NetMC, normalized = TRUE) # degree centrality
+Eig2 <- evcent(Pla2NetMC)$vector # eigenvector
+Betw2 <- betweenness(Pla2NetMC) # betweenness
+Close2 <- closeness(Pla2NetMC)  # closeness
+
+univ_centralities <- cbind(Degree2, Eig2, Betw2, Close2) # compile
+univ_centralities_df <- as.data.frame(univ_centralities) # convert into dataframe
+
+# join with university attributes (region)
+univ_centralities_df <- tibble::rownames_to_column(univ_centralities_df, "University") # transform row names into column
+univ_centralities_df <- inner_join(univ_centralities_df, univ_region, by = "University")
+
+kable(head(univ_centralities_df), caption = "The 6 first universities with their centrality measures") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br>
+We can save and export the results as csv files: 
+```{r warning = FALSE, message = FALSE}
+write.csv(place_centralities_df, "place_centralities.csv") 
+write.csv(univ_centralities_df, "univ_centralities.csv") 
+```
+
+
+## Visualize metrics
+
+We can represent the nodes' relative positions in the networks by indexing their sizes to their centrality scores. For example, we can index the size of place-nodes to their degree centrality in order to highlight the most connected places and colleges based on their relative number of neighbors: 
+
+```{r warning = FALSE, message = FALSE}
+
+V(Pla1NetMC)$size <- degree(Pla1NetMC)
+V(Pla2NetMC)$size <- degree(Pla2NetMC)
+
+plot(Pla1NetMC,
+     vertex.color="orange",
+     vertex.shape = "circle",
+     vertex.size = V(Pla1NetMC)$size/8, 
+     vertex.label.color = "black", 
+     vertex.label.cex = V(Pla1NetMC)$size/100, 
+     main="Network of places",
+     sub = "Node size represents degree centrality")
+
+plot(Pla2NetMC,
+     vertex.color="light blue",
+     vertex.shape = "circle",
+     vertex.size = V(Pla2NetMC)$size/2, 
+     vertex.label.color = "black", 
+     vertex.label.cex = V(Pla2NetMC)$size/100, 
+     main="Network of colleges",
+     sub = "Node size represents degree centrality")
+
+
+```
+<br>
+
+Alternatively, we can index nodes' size to their eigenvector centrality in order to highlight academic hubs: 
+```{r warning = FALSE, message = FALSE}
+
+V(Pla1NetMC)$size <- evcent(Pla1NetMC)$vector
+V(Pla2NetMC)$size <- evcent(Pla2NetMC)$vector
+
+plot(Pla1NetMC,
+     vertex.color="orange",
+     vertex.shape = "circle",
+       vertex.size = (V(Pla1NetMC)$size)*5, 
+     vertex.label.color = "black", 
+     vertex.label.cex = V(Pla1NetMC)$size/2.5, 
+     main="Network of places",
+     sub = "Node size represents eigenvector centrality")
+
+plot(Pla2NetMC,
+     vertex.color="light blue",
+     vertex.shape = "circle",
+     vertex.size = (V(Pla2NetMC)$size)*8, 
+     vertex.label.color = "black", 
+     vertex.label.cex = V(Pla2NetMC)$size, 
+     main="Network of colleges",
+     sub = "Node size represents eigenvector centrality")
+
+
+```
+<br>
+
+Alternatively, we can index nodes' size to their betweenness centrality in order to visualize brokering places/colleges in our alumni networks: 
+```{r warning = FALSE, message = FALSE}
+
+V(Pla1NetMC)$size <- betweenness(Pla1NetMC)
+
+plot(Pla1NetMC,
+     vertex.color="orange",
+     vertex.shape = "circle",
+     vertex.size = V(Pla1NetMC)$size/100, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of places",
+     sub = "Node size represents betweenness centrality")
+
+V(Pla2NetMC)$size <- betweenness(Pla2NetMC)
+
+plot(Pla2NetMC,
+     vertex.color="light blue",
+     vertex.shape = "circle",
+     vertex.size = V(Pla2NetMC)$size/100, 
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.3, 
+     main="Network of colleges",
+     sub = "Node size represents betweenness centrality")
+
+
+```
+
+
+## Analyze metrics
+
+How central is each place-node in the network of places, and each university-node in the transposed network? 
+ 
+Based on eigenvector centrality, Columbia University topped the list of the most central places. The places centered on New York University (NYU) also stand out prominently in the list:
+```{r warning = FALSE, message = FALSE}
+
+eig <- place_centralities_df %>% 
+  select(PlaceLabel, PlaceDetail, Eig) %>% 
+  arrange(desc(Eig))
+
+kable(head(eig), caption = "The 6 most central places, based on eigenvector") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br>
+The ranking is slightly different if we rely on betweenness centrality:
+```{r warning = FALSE, message = FALSE}
+
+betw <- place_centralities_df %>% 
+  select(PlaceLabel, PlaceDetail, Betw) %>% 
+  arrange(desc(Betw))
+
+kable(head(betw), caption = "The 6 most central places, based on betweenness centrality") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br> 
+The two first nodes are identical (P003(1-4), P016(1-3)), but we also find places that do not appear in the eigenvector ranking - P037(2-2), P138(1-2), P032(2-2). Columbia-based places remained central, but other universities (California, George Washington) seemed to play an important brokering role, such as in P032(2-2). 
+
+<br> 
+The ranking based on closeness also differs from the previous ones: 
+```{r warning = FALSE, message = FALSE}
+
+close <- place_centralities_df %>% 
+  select(PlaceLabel, PlaceDetail, Close) %>% 
+  arrange(desc(Close))
+
+kable(head(close), caption = "The 6 most central places, based on closeneness") %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+<br>
+Similarly, we can rank the university-nodes according to their eigenvector centrality: 
+```{r warning = FALSE, message = FALSE}
+
+head(univ_centralities_df %>% 
+  select(University, Eig2) %>% 
+  arrange(desc(Eig2)))
+
+```
+<br>
+We notice an interesting correspondence between the two results, which again illustrates the duality of place-based networks. The most central colleges all appear in the most central places based on the same metrics (Columbia, NYU, Pennsylvania, etc). They refer to the most prestigious colleges which attracted the largest number of Chinese students during the Republican period. This correspondence between most central places and most central colleges confirms the value of a dual approach to place-based networks.  
+
+In contrast to eigenvector, the rankings based on betweenness and closeness centralities present more complex patterns of correspondence across the two networks. 
+
+The most central places based on betweeneness centrality include:
+```{r warning = FALSE, message = FALSE}
+
+head(univ_centralities_df %>% 
+  select(University, Betw2) %>% 
+  arrange(desc(Betw2)))
+
+```
+<br>
+Most central universities, based on closeness: 
+```{r warning = FALSE, message = FALSE}
+
+head(univ_centralities_df %>% 
+  select(University, Close2) %>% 
+  arrange(desc(Close2)))
+
+```
+<br>
+Yale and Princeton seem to play an important brokering position, as reflected by their high betweenness centrality. Yale, Michigan and Wisconsin served to connect smaller communities, as they present higher closeness centrality scores. 
+
+A more in-depth analysis is required to interpret the results and to identify which nodes are more central depending on the various centrality measures and their corresponding ranks in the two networks. In the next section, we propose an alternative approach, which aims to identify positional profiles based on the combination of centrality measures and other qualitative attributes (nationality, mobility, etc). 
+
+# Positional profiles (PCA)
+
+This final section applies [Principal Component Analysis (PCA) and hierarchical clustering (HCPC)](http://factominer.free.fr/more/HCPC_husson_josse.pdf) to identify positional profiles in the two networks, based on the above-computed centrality measures and other qualitative attributes. As in the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places1.html), we rely on [FactomineR](http://factominer.free.fr/) and associated packages to perform PCA and hierarchical clustering.  
+
+
+## Prepare data 
+
+Prepare places data for PCA: 
+```{r warning = FALSE, message = FALSE}
+
+# transform numeric variables (NbElements, NbSets) into categorical variables: 
+
+place_centralities_pca <- within(place_centralities_df, {   
+  NbElements.cat <- NA # need to initialize variable
+  NbElements.cat[NbElements == 1] <- "1"
+  NbElements.cat[NbElements > 1] <- "+1"
+} )
+
+place_centralities_pca$NbElements.cat <- factor(place_centralities_pca$NbElements.cat, levels = c("1", "+1"))
+
+place_centralities_pca <- within(place_centralities_pca, {   
+  NbSets.cat <- NA # need to initialize variable
+  NbSets.cat[NbSets == 1] <- "1"
+  NbSets.cat[NbSets == 2] <- "2"
+  NbSets.cat[NbSets > 2] <- "+2"
+} )
+
+place_centralities_pca$NbSets.cat <- factor(place_centralities_pca$NbSets.cat, levels = c("1", "2", "+2"))
+
+# select relevant variables and set "PlaceLabels" as row names: 
+
+place_centralities_pca1 <- place_centralities_pca %>% select(PlaceLabel, Degree, Eig, Betw, Close) # quantitative variables only
+place_centralities_pca2 <- place_centralities_pca %>% select(-c(PlaceNumber, PlaceDetail, NbElements, NbSets)) # supplementary (qualitative) variables
+place_centralities_pca1_rn <- tibble::column_to_rownames(place_centralities_pca1, "PlaceLabel")
+place_centralities_pca2_rn <- tibble::column_to_rownames(place_centralities_pca2, "PlaceLabel")
+
+```
+<br>
+Similary, prepare university data for PCA: 
+```{r warning = FALSE, message = FALSE}
+# set "University" as row names: 
+univ_centralities_pca <- tibble::column_to_rownames(univ_centralities_df, "University")
+```
+
+Load packages: 
+```{r warning = FALSE, message = FALSE}
+library(FactoMineR)
+library(Factoshiny)
+library(factoextra)
+```
+
+## Places profiles
+
+We can now apply PCA to places centrality measures. We perform two PCAs, one based on quantitative variables only (network centrality measures), one based on both quantitative and qualitative variables (places attributes). 
+
+We perform a first PCA using quantitative variables (network centrality scores) only: 
+```{r warning = FALSE, message = FALSE}
+
+res.PCA1<-PCA(place_centralities_pca1_rn,graph=FALSE)
+plot.PCA(res.PCA1,choix='var',title="PCA Graphs of variables")
+plot.PCA(res.PCA1,title="PCA Graphs of individuals (places)")
+
+```
+<br>
+Altogether, the two first dimensions retain almost 94% of information, 80% on the first dimension and 14% on the second one. 4 dimensions are necessary to capture 100%. We can extract and plot eigenvalues (variances): 
+```{r warning=FALSE, message=FALSE}
+get_eig(res.PCA1)
+fviz_screeplot(res.PCA1, addlabels = TRUE, ylim = c(0, 50), main = "PCA Eigenvalues (Places positional profiles)")
+```
+<br>
+On the graph of variables, all centrality metrics, especially degree and betweenness, are well projected and positively associated with the first dimension. In addition, betweenness is positively correlated with the second dimension, whereas eigenvector and closeness centralities are negatively, though moderately, associated with the second dimension. 
+On the graph of individuals below, the first dimension clearly separates central places on the right side and peripheral places on the left. In addition, the second dimension separates brokering places characterized by a high betweenness centrality, above (mostly P003) and academic hubs with high eigenvector, below. 
+
+**Graph of individuals (places)** 
+```{r warning = FALSE, message = FALSE}
+plot.PCA(res.PCA1,select='cos2  0.25',habillage='Eig',title="PCA Graph of individuals",cex=0.7,cex.main=0.7,cex.axis=0.7) # color gradient represents eigenvector (the stronger the color, the higher the score), 
+plot.PCA(res.PCA1,select='cos2  0.25',habillage='Betw',title="PCA Graph of individuals",cex=0.7,cex.main=0.7,cex.axis=0.7) #  color gradient represents betweenness (the stronger the color, the higher the score)
+plot.PCA(res.PCA1,select='cos2  0.25',habillage='Close',title="PCA Graph of individuals",cex=0.7,cex.main=0.7,cex.axis=0.7) #  color gradient represents closeness (the stronger the color, the higher the score)
+plot.PCA(res.PCA1,select='cos2  0.25',habillage='Degree',title="PCA Graph of individuals",cex=0.7,cex.main=0.7,cex.axis=0.7) #  color gradient represents degree (the stronger the color, the higher the score)
+```
+<br> 
+Note: On the above graphs, labels are shown only for the best projected individuals (cos2 >0.25)
+
+In order to better delineate positional profiles, we apply hierarchical clustering on all 4 dimensions: 
+```{r warning = FALSE, message = FALSE}
+# HCPC on all 4 dimensions 
+res.PCA1<-PCA(place_centralities_pca1_rn,ncp=4,graph=FALSE)
+res.HCPC1<-HCPC(res.PCA1,nb.clust=3,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC1,choice='tree',title='Cluster dendogram')
+plot.HCPC(res.HCPC1,choice='map',draw.tree=FALSE,title='Factor Map')
+plot.HCPC(res.HCPC1,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D Tree on Factor Map')
+```
+<br>
+The partition is mostly determined by eigenvector, and to a lesser extent, degree, closeness, and finally, betweenness. The clustering algorithm identified 3 classes, which correspond to three positional profiles, based on particular combinations of centrality measures: 
+
+  1. **Class 1 : Outsiders**: Peripheral places by every centrality measures. Representative individuals (paragons) include: P158(4-1) P164(3-1) P172(2-1) P168(3-1) P218(1-1) (see table below). They were mostly non-Chinese students who attended just one university, usually not located on the East Coast, and who presented a wide range of academic profiles.  
+  2. **Class 2: Small-world places**: characterized with high closeness centrality : P143(1-2)  P068(1-2)  P125(1-2)  P021(1-3)  P005(1-3). They refer to narrowly specialized students (engineers, professionals) who attended two or more universities located on the East Coast or in the Midwest. 
+  3. **Class 3: Aacademic hubs**: places characterized with high centrality scores in every category. Among paragons, we find: P056(1-2) P088(1-2) P098(1-2) P128(1-2) P036(2-2). They include mostly Chinese master graduates in sciences or the humanities who attended two colleges and transferred between the East Coast and the Midwest during their studies. 
+  
+**Paragons for class 1 (Outsiders)**
+```{r warning = FALSE, message = FALSE}
+
+para1 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P158(4-1)", "P164(3-1)", "P172(2-1)", "P168(3-1)", "P218(1-1)"))
+
+para1
+
+```
+<br>
+**Paragons for class 2 (Small-world places)**
+```{r warning = FALSE, message = FALSE}
+
+para2 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P143(1-2)", "P068(1-2)", "P125(1-2)", "P021(1-3)", "P005(1-3)"))
+
+para2
+
+```
+<br>
+**Paragons for class 3 (Academic hubs)**
+```{r warning = FALSE, message = FALSE}
+
+para3 <- place_attributes %>% 
+  filter(PlaceLabel %in% c("P056(1-2)", "P088(1-2)", "P098(1-2)", "P128(1-2)", "P036(2-2)"))
+
+para3
+
+```
+<br>
+
+In order to further characterize these positional profiles, it would be useful to integrate the qualitative attributes of academic places. We thereby hope to gain a better understanding of why each place held a central or peripheral position in the academic networks. Was their relative position related to the number of students and colleges they involved? To the students’ field of study and level of qualification? Or to the region and period of study? 
+
+To test these hypotheses, we perform a second PCA in which we treat qualitative attributes as supplementary variables: 
+```{r warning = FALSE, message = FALSE}
+res.PCA2<-PCA(place_centralities_pca2_rn,quali.sup=c(5,6,7,8,9,10,11,12,13,14,15,16),graph=FALSE)
+plot.PCA(res.PCA2,choix='var',title="PCA Graph of Variables")
+plot.PCA(res.PCA2,title="PCA Graph of places (with qualitative attributes)")
+```
+<br>
+Since the qualitative attributes are treated as supplementary variables, they do not influence the results of PCA. We therefore obtain the same eigenvalues as in the previous PCA based on purely quantitative variables, as well as the same topological positions on the PCA graphs, and the same three classes after clustering.
+
+**Eigenvalues**
+```{r warning=FALSE, message=FALSE}
+get_eig(res.PCA1)
+fviz_screeplot(res.PCA1, addlabels = TRUE, ylim = c(0, 50), main = "PCA Eigenvalues (Places positional profiles)")
+```
+<br>
+**Graphs of individuals (places), colored by qualitative variables** 
+
+```{r warning = FALSE, message = FALSE}
+plotellipses(res.PCA2, keepvar=15,invisible=c('ind.sup'),title="PCA graph of places (number of students per place)", label =c('quali')) # 
+plotellipses(res.PCA2, keepvar=16,invisible=c('ind.sup'),title="PCA graph of places (number of colleges per place)", label =c('quali')) 
+```
+<br>
+As apparent on the graph above, peripheral places focused on a single university and usually involved more than one student. 
+```{r warning = FALSE, message = FALSE}
+plotellipses(res.PCA2, keepvar=5,invisible=c('ind.sup'),title="PCA graph of places (students' nationality)", cex=1.3,cex.main=1.3,cex.axis=1.3,label =c('quali'))
+```
+<br>
+Central places on the right were more likely to involve Chinese students only (black dots), whereas low centrality scores on the left are associated with non-Chinese (green) or both Chinese and non-Chinese places (red dots). 
+```{r warning = FALSE, message = FALSE}
+plotellipses(res.PCA2, keepvar=9,invisible=c('ind.sup'),title="PCA graph of places (level of qualification", label =c('quali')) # level of qualification
+```
+<br>
+The field of study and the level of qualification do not seem to influence to a great extent the centrality of academic places, except for certified engineers who are systematically associated with low centrality scores (see above). In addition, peripheral places are "naturally" characterized by a low degree of academic mobility, and with desynchronised or early periods of study. On the opposite, more recent academic trajectories (post 1909) are associated with higher centrality scores and therefore held more central positions in alumni networks: 
+```{r warning = FALSE, message = FALSE}
+plotellipses(res.PCA2, keepvar=13,invisible=c('ind.sup'),title="PCA graph of places (period of study)", label =c('quali')) # period (synchronic/diachronic)
+plotellipses(res.PCA2, keepvar=14,invisible=c('ind.sup'),title="PCA graph of places (periodization)", label =c('quali')) # periodization (period group)
+```
+<br>
+In order to make these observations more systematic, we eventually apply HCPC on all 4 dimensions:
+```{r warning = FALSE, message = FALSE}
+# HCPC on all 4 dimensions 
+res.PCA2<-PCA(place_centralities_pca2_rn,ncp=4,quali.sup=c(5,6,7,8,9,10,11,12,13,14,15,16),graph=FALSE)
+res.HCPC2<-HCPC(res.PCA2,nb.clust=3,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC2,choice='tree',title='Cluster dendogram')
+plot.HCPC(res.HCPC2,choice='map',draw.tree=FALSE,title='Factor Map')
+plot.HCPC(res.HCPC2,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D Tree on Factor Map')
+```
+<br>
+Among qualitative variables, the partition is most strongly determined by the number of colleges per place, geographical mobility, and to a lesser extent, students’ nationality and level of qualification. We notice that the number of students and the field of study do not play a significant part in defining the relative centrality of academic places. 
+
+We can now refine our previous interpretations of the three positional clusters: 
+
+  1. **Cluster 1: Peripheral places** are centered on a single university, usually located in the Midwest, and involved non-Chinese certified engineers or bachelor graduates (more generally, lower levels of qualification). Among the paragons, we find: P158(4-1) P164(3-1) P172(2-1) P168(3-1) P218(1-1) 
+  2. **Cluster 2: Small-world places** : corresponds to the average profile of places involving Chinese master graduates who specialized in professional fields and transferred between two different universities within a restricted geographical radius. Paragons of this class include: P143(1-2)  P068(1-2)  P125(1-2)  P021(1-3)  P005(1-3)
+  3. **Cluster 3: Academic hubs** (i.e. places with high centrality scores) refer to multi-colleges places characterized by high geographical mobility between the two core academic regions (East Coast-Midwest). Paragons principally include Chinese master graduates, such as P056(1-2) P088(1-2) P098(1-2) P128(1-2) P036(2-2). 
+  
+This confirms our observations based on the previous PCA.   
+  
+Relying on the duality property of place-based networks, we will apply the same methodology to the transposed network of colleges linked by places. 
+
+## Colleges profiles
+
+Similarly, we perform a PCA on universities centrality measures. We treat qualitative attribute (region) as supplementary variable: 
+```{r warning = FALSE, message = FALSE}
+
+res.PCA<-PCA(univ_centralities_pca,quali.sup=c(5),graph=FALSE) # we set region as supplementary qualitative variable
+# plot.PCA(res.PCA,choix='var',cex=0.85,cex.main=0.85,cex.axis=0.85,title="PCA Graph of variables")
+# plot.PCA(res.PCA,invisible=c('ind.sup'),habillage=5,title="PCA graph of individuals (universities)",cex=0.65,cex.main=0.65,cex.axis=0.65,label =c('ind','quali'))
+
+```
+<br> 
+We extract and plot eigenvalues (variances): 
+```{r warning=FALSE, message=FALSE}
+get_eig(res.PCA)
+fviz_screeplot(res.PCA, addlabels = TRUE, ylim = c(0, 50), main = "PCA Eigenvalues (Universities centralities)")
+```
+<br>
+The two first dimensions capture almost 97% of information - 87% for the first dimension and 10% on the second. 4 dimensions are necessary to capture 100% information. 
+
+Graph of variables (each group of variable is represented by a different color, based on kmean clustering): 
+```{r warning=FALSE, message=FALSE}
+# Create 3 groups of variables (centers = 3)
+set.seed(123)
+var_univ <- get_pca_var(res.PCA)
+res.kmu <- kmeans(var_univ$coord, centers = 3, nstart = 25)
+grp_univ <- as.factor(res.kmu$cluster)
+# Color variables by groups
+fviz_pca_var(res.PCA, col.var = grp_univ,
+             palette = c("#999999", "#E69F00", "#56B4E9"),
+             legend.title = "Centrality groups")
+```
+<br>
+The graph of variables shows that all quantitative variables (centrality measures) are positively correlated with the first dimension, especially Eigenvector and Degree centralities. Closeness is positively, though moderately correlated with the second dimension. Betweenness and degree centralities, on the opposite, are negatively correlated with the second dimension. 
+
+On the biplot/graph of individuals, central colleges on the right side of the graph are associated with the East Coast, whereas peripheral colleges on the left side are associated to regions other than the East Coast and the Midwest. Midwestern colleges represent the average profile, since they are close to the point of origin. Colleges with high closeness located above the x axis are usually based outside of the United States. Below the x axis, brokering colleges with high betweeneness centrality are not associated with any particular region. 
+
+```{r warning = FALSE, message = FALSE}
+
+fviz_pca_ind(res.PCA, repel = TRUE, col.ind="cos2", 
+             title = "PCA Graph of individuals (universities)", 
+             caption = "Color gradient represents quality of projection (cos2)") +
+      scale_color_gradient2(low="white", mid="blue",
+      high="red", midpoint=0.5)
+
+```
+
+
+```{r warning = FALSE, message = FALSE}
+grp_region <- as.factor(univ_centralities_pca[, "Region"])
+fviz_pca_biplot(res.PCA,  habillage = grp_region, col.var = "#999999", label = "var", 
+             addEllipses = FALSE, repel = TRUE, title = "PCA - Biplot", caption = "Each region is represented by a distinct color and shape") 
+
+```
+
+<br>
+Finally, we perform a hierarchical clustering (HCPC) on all four dimensions to group colleges according to their centrality scores and qualitative attributes (region): 
+
+```{r warning = FALSE, message = FALSE}
+res.PCA<-PCA(univ_centralities_pca,ncp=4,quali.sup=c(5),graph=FALSE)
+res.HCPC<-HCPC(res.PCA,nb.clust=3,consol=FALSE,graph=FALSE)
+#plot.HCPC(res.HCPC,choice='tree',title='Tree map')
+# plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor map')
+```
+
+Cluster dendograms: 
+```{r warning=FALSE, message=FALSE}
+fviz_dend(res.HCPC, show_labels = TRUE, cex = 0.3,
+          main = "Cluster dendogram of universities", 
+          caption = "Based on network centrality measures")
+
+fviz_cluster(res.HCPC, geom = "point", label = TRUE, cex = 0.3, 
+             ellipse.type = "confidence", 
+             theme_minimal(), 
+          main = "Factor map of universities", 
+          caption = "Based on network centrality measures")
+
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D tree on factor map')
+
+```
+
+<br>
+The partition is most strongly determined by eigenvector, degree, and to a lesser extent, betweenness, and closeness centralities. The clustering algorithm identifies four classes of colleges, but one class is only defined by Columbia University (4). This university presents an anomalous profile characterized by exceptionally high scores for every centrality metrics, including betweenness. It could be treated as a supplementary individual in a second iteration of PCA/HCPC. An alternative option is to merge Columbia with the closest class (3) by manually setting the number of desired classes to 3. The three resulting clusters can be described as followed: 
+
+  1. **Class 1 : Outsiders** with low centrality scores in every category. Representative individuals in this cluster (paragons) include Pratt Institute, Y.M.C.A. College, Washington & Jefferson, Park University, and Antioch College. Each of these universities was attended by a single student. They usually appeared in just one place (except for Pratt Institute, which is included in both P005(1-3) and P195(1-1)), and therefore remained peripheral in academic networks. 
+  2. **Class 2 : Specialized colleges** with high closeness centralities. Paragons include Denison, Wooster, Johns Hopkins, Minnesota, and Colorado University. They refer to specialized curricula in sciences and professional fields (e.g. law, medicine). These universities served to connect small professional communities. 
+  3. **Class 3: Academic hubs** with high centrality scores in every category, particularly eigenvector and degree centralities. Paragons include Pennsylvania, Chicago, Harvard, California, and New York University. These universities are to be found in many multi-colleges and often multi-students places (see the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places1.html)).  
+
+Columbia stood out by its particularly high betweenness centrality, which reflects the fact that this university drew a lot of students from a wide range of academic backgrounds. It can be characterized as a brokering university holding a unique position in our network of American University Men.     
+
+```{r warning=FALSE, message=FALSE}
+res.HCPC$desc.ind$para # paragons
+```
+<br>
+Again, we notice an interesting correspondence between the classes and the paragons identified in the networks of places and the transposed network of colleges. 
+
+# Concluding remarks
+
+From these preliminary explorations, it appears that our alumni networks were far from homogeneous. In the next tutorial, we will see how we can use community detection to find subgroups of more densely connected places and colleges within the two networks. 
+
+# References
+
+Everett, Martin & Borgatti, Stephen. (2013). The dual-projection approach for two-mode networks. Social Networks. 35. 204-210. 10.1016/j.socnet.2012.05.004.
+
+Pizarro, Narciso. “Appartenances, places et réseaux de places. La reproduction des processus sociaux et la génération d’un espace homogène pour la définition des structures sociales.” *Sociologie et sociétés* 31, no. 1 (2002): 143–61.
+
+Pizarro, Narciso. “Regularidad Relacional, Redes de Lugares y Reproduccion Social.” *Politica y Sociedad* 33 (2000).
+

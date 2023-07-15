@@ -1,0 +1,1819 @@
+---
+title: "A place-based study of alumni networks in modern China (3)"
+subtitle: "Community detection in place-based networks" 
+author: "Cécile Armand"
+affiliation: Aix-Marseille University
+date: "`r lubridate::today()`"
+tags: [directory, newspaper, circulation, periodical, press, publisher]  
+abstract: |
+  This is the third instalment of our tutorial series devoted to a place-based study of American University Men in China. In this tutorial, we rely on community detection (Louvain algorithm) to detect, visualize and analyze subgroups of alumni within place-based networks.  
+  
+  <style>
+    body {
+    text-align: justify}
+  </style>
+    
+output: 
+  html_document:
+    toc: true
+    toc_float: 
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 2
+    number_sections: false
+    code_folding: show # hide
+    fig_caption: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+library(Places)
+library(igraph)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+
+
+In the [previous tutorial](https://bookdown.enpchina.eu/AUC/Places2.html), we learnt how to build and analyze the network of places and its transposed network of colleges using various centrality measures. In this new installment, we will see how we can detect communities of more densely connected places/colleges within the two networks. 
+
+The purpose is twofold :  
+
+  * Substantively, to understand how academic communities took shape through the interconnection of students’ trajectories 
+  * Methodologically, to illustrate the duality of place-based networks (which we emphasized in the previous tutorial) and to demonstrate the value of jointly analyzing the network of places and its transposed network of colleges.  
+
+Before we proceed to community detection, let's recapitulate the successive operations for building place-based networks. 
+
+# Recap
+
+**Summary of previous steps**
+```{r warning = FALSE, message = FALSE}
+
+# load packages
+
+library(Places)
+library(tidyverse)
+library(igraph)
+
+# load original data 
+
+aucplaces <- read_delim("Data/aucdata.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+aucplaces <- as.data.frame(aucplaces) 
+
+# retrieve places 
+
+Result1 <- places(aucplaces, "Name_eng", "University")
+result1df <- as.data.frame(Result1$PlacesData) 
+
+# load annotated data (places manually labeled wit qualitative attributes)
+
+place_attributes <- read_csv("Data/place_attributes.csv",
+col_types = cols(...1 = col_skip())) # manually labeled places
+
+# load university data (region)
+
+univ_region <- read_delim("Data/univ_region.csv",
+delim = ";", escape_double = FALSE, trim_ws = TRUE)
+
+# create network of places 
+
+bimod<-table(Result1$Edgelist$Places, Result1$Edgelist$Set) 
+PlacesMat<-bimod %*% t(bimod)
+diag(PlacesMat)<-0 
+Pla1Net<-graph_from_adjacency_matrix(PlacesMat, mode="undirected", weighted = TRUE)
+
+# create network of colleges 
+
+bimod2<-table(Result1$Edgelist$Set, Result1$Edgelist$Places)
+PlacesMat2<-bimod2 %*% t(bimod2)
+diag(PlacesMat2)<-0
+Pla2Net<-graph_from_adjacency_matrix(PlacesMat2, mode="undirected", weighted = TRUE)
+
+# extract main components
+Pla1NetMC <- induced.subgraph(Pla1Net,vids=clusters(Pla1Net)$membership==1)
+Pla2NetMC <- induced.subgraph(Pla2Net,vids=clusters(Pla2Net)$membership==3)
+
+```
+
+# Workflow 
+
+We proceed in four steps: 
+
+  1. We compare various clustering methods and select the most appropriate. 
+  2. We analyze the size of communities and their membership
+  3. We extract, visualize and compare the largest communities (their global features)
+  4. We extract global measures for each cluster and we apply Principal Component Analysis (PCA) to group communities based on their structural attributes.
+  
+# Method selection 
+
+We tested four [clustering methods](https://igraph.org/r/doc/communities.html) that are available in igraph: Louvain (lvc), spin glass (sg), fast greedy (fg), and edge betweeness (Girvan-Newman) (eb). The two first methods are non-hierarchical, whereas the two last ones are hierarchical clustering methods. The results are summarized in the table below: 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-7zrl">Code</th>
+    <th class="tg-7zrl">Method</th>
+    <th class="tg-7zrl">Network</th>
+    <th class="tg-7zrl">ModScore</th>
+    <th class="tg-7zrl">NbrClusters</th>
+    <th class="tg-7zrl">MinSize</th>
+    <th class="tg-7zrl">MaxSize</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-7zrl">lvc1</td>
+    <td class="tg-7zrl">Louvain</td>
+    <td class="tg-7zrl">Places</td>
+    <td class="tg-7zrl">0.52</td>
+    <td class="tg-7zrl">7</td>
+    <td class="tg-7zrl">10</td>
+    <td class="tg-7zrl">46</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">lvc2</td>
+    <td class="tg-7zrl">Louvain</td>
+    <td class="tg-7zrl">Colleges</td>
+    <td class="tg-7zrl">0.49</td>
+    <td class="tg-7zrl">8</td>
+    <td class="tg-7zrl">6</td>
+    <td class="tg-7zrl">21</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">sg1</td>
+    <td class="tg-7zrl">Spin glass</td>
+    <td class="tg-7zrl">Places</td>
+    <td class="tg-7zrl">0.52</td>
+    <td class="tg-7zrl">8</td>
+    <td class="tg-7zrl">10</td>
+    <td class="tg-7zrl">36</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">sg2</td>
+    <td class="tg-7zrl">Spin glass</td>
+    <td class="tg-7zrl">Colleges</td>
+    <td class="tg-7zrl">0.48</td>
+    <td class="tg-7zrl">11</td>
+    <td class="tg-7zrl">3</td>
+    <td class="tg-7zrl">21</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">fg1</td>
+    <td class="tg-7zrl">Fast greedy</td>
+    <td class="tg-7zrl">Places</td>
+    <td class="tg-7zrl">0.49</td>
+    <td class="tg-7zrl">5</td>
+    <td class="tg-7zrl">31</td>
+    <td class="tg-7zrl">41</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">fg2</td>
+    <td class="tg-7zrl">Fast greedy</td>
+    <td class="tg-7zrl">Colleges</td>
+    <td class="tg-7zrl">0.49</td>
+    <td class="tg-7zrl">8</td>
+    <td class="tg-7zrl">3</td>
+    <td class="tg-7zrl">21</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">eb1</td>
+    <td class="tg-7zrl">Girvan-Newman (edge betweeness)</td>
+    <td class="tg-7zrl">Places</td>
+    <td class="tg-7zrl">0.48</td>
+    <td class="tg-7zrl">43</td>
+    <td class="tg-7zrl">1</td>
+    <td class="tg-7zrl">33</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">eb2</td>
+    <td class="tg-7zrl">Girvan-Newman (edge betweeness)</td>
+    <td class="tg-7zrl">Colleges</td>
+    <td class="tg-7zrl">0.46</td>
+    <td class="tg-7zrl">13</td>
+    <td class="tg-7zrl">2</td>
+    <td class="tg-7zrl">20</td>
+  </tr>
+</tbody>
+</table>
+
+<br>
+The following lines of code were used to cluster the networks using the various methods and evaluate their respective performance: 
+```{r eval = FALSE, warning = FALSE, message = FALSE}
+
+# Louvain 
+
+## detect communities
+lvc1 <- cluster_louvain(Pla1NetMC)
+lvc2 <- cluster_louvain(Pla2NetMC)
+## inspect results 
+print(lvc1) # 7 groups, modularity score (mod): 0.52
+print(lvc2) # 8 groups, modularity score (mod): 0.49
+# communities sizes
+sizes(lvc1) # from 10 to 46
+sizes(lvc2) # from 6 to 21
+
+# Spin glass 
+
+## detect communities
+sg1 <- cluster_spinglass(Pla1NetMC)
+sg2 <- cluster_spinglass(Pla2NetMC)
+## inspect results
+print(sg1) #  8 groups, mod: 0.52 
+print(sg2) #  11 groups, mod: 0.48 # larger number of smaller groups
+sizes(sg1) # size of clusters ranges from 10 to 36 nodes
+sizes(sg2) # size of clusters ranges from 3 to 21 nodes
+
+# Fast greedy 
+
+## detect communities
+fg1 <- cluster_fast_greedy(Pla1NetMC)
+fg2 <- cluster_fast_greedy(Pla2NetMC)
+## inspect results
+print(fg1) #  5, mod: 0.49 # # smaller number of larger groups (less skewed, more egalitarian)
+print(fg2) #  8, mod: 0.49 # larger number of smaller groups (more skewed, less egalitarian)
+sizes(fg1) # size of clusters : ranges from 31 to 41 nodes
+sizes(fg2) # size of clusters : ranges from 3 to 21 nodes
+
+# Girvan-Newman (Edge Betweenness) 
+
+## detect communities
+eb1 <- cluster_edge_betweenness(Pla1NetMC)
+eb2 <- cluster_edge_betweenness(Pla2NetMC)
+## inspect results
+print(eb1) #  43, mod: 0.48 # larger number of communities (more dispersed)
+print(eb2) #  13, mod: 0.46 # larger number of smaller groups
+sizes(eb1) # size of clusters : ranges from 10 to 36 nodes
+sizes(eb2) # size of clusters : ranges from 3 to 21 nodes
+
+```
+
+<br>
+In the next steps, we will rely on the [Louvain algorithm](https://en.wikipedia.org/wiki/Louvain_method) because it presents the highest modularity scores on both networks and it provides the most meaningful results from a humanistic perspective. 
+
+**Modularity** is a measure of how well groups have been partitioned into clusters. It compares the relationships in a cluster compared to what would be expected for a random (or other baseline) number of connections. Modularity measures the quality (i.e., presumed accuracy) of a community grouping by comparing its relationship density to a suitably defined random network. The modularity quantifies the quality of an assignment of nodes to communities by evaluating how much more densely connected the nodes within a community are, compared to how connected they would be in a random network. 
+
+The **Louvain algorithm** is known for being one of the fastest modularity-based algorithms and for working well with large graphs (hundreds or thousands of nodes and edges). It also reveals a hierarchy of communities at different scales, which is useful for understanding the global functioning of a network. The method consists of repeated application of two steps. The first step is a “greedy” assignment of nodes to communities, favoring local optimizations of modularity. The second step is the definition of a new coarse-grained network based on the communities found in the first step. These two steps are repeated until no further modularity-increasing reassignments of communities are possible.
+
+More details about the Louvain method can be found [here](https://neo4j.com/blog/graph-algorithms-neo4j-louvain-modularity/#:~:text=Modularity%20is%20a%20measure%20of,repeated%20application%20of%20two%20steps). 
+  
+# Community detection
+
+```{r warning = FALSE, message = FALSE}
+## detect communities with Louvain
+lvc1 <- cluster_louvain(Pla1NetMC)
+lvc2 <- cluster_louvain(Pla2NetMC)
+```
+
+
+## Plot communities
+
+Network of places
+```{r warning = FALSE, message = FALSE}
+V(Pla1NetMC)$group <- lvc1$membership # create a group for each community
+V(Pla1NetMC)$color <- lvc1$membership # node color reflects group membership 
+
+plot(lvc1, Pla1NetMC, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size=1.8,
+     main="Communities of places (Louvain method)")
+
+```
+<br>
+Network of colleges
+```{r warning = FALSE, message = FALSE}
+V(Pla2NetMC)$group <- lvc2$membership  # create a group for each community
+V(Pla2NetMC)$color <- lvc2$membership # node color reflects group membership 
+
+plot(lvc2, Pla2NetMC, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size=3,
+     main="Communities of colleges (Louvain method)")
+```
+<br> 
+In the two graphs above, each community is represented by a distinct color. Black ties refer to edges within communities, whereas red edges refer to edges across/between communities. 
+
+These visualizations contain too much information to be really useful. In order to make of sense of the results, we need to extract and label each community individually.    
+
+## Extract communities
+
+```{r warning = FALSE, message = FALSE}
+
+# store membership data 
+louv_places <- data.frame(lvc1$membership,
+                          lvc1$names) %>% 
+  group_by(lvc1.membership) %>% 
+  add_tally() %>% # add size of clusters
+  rename(PlaceLabel = lvc1.names, lvcluster = lvc1.membership, size = n)
+
+louv_univ <- data.frame(lvc2$membership,
+                        lvc2$names)  %>% 
+  group_by(lvc2.membership) %>%  
+  add_tally() %>% # add size of clusters
+  rename(University = lvc2.names, lvcluster = lvc2.membership, 
+         size = n) 
+
+# join with places and colleges attributes (place details and colleges popularity index = total number of curricula)
+louv_places_detail <- inner_join(louv_places, place_attributes, by = "PlaceLabel")  # join place details 
+univ_count <- aucplaces %>% group_by(University) %>% count() # compute index of popularity 
+louv_univ_detail <- inner_join(louv_univ, univ_count, by = "University") # join with colleges clusters
+louv_univ_detail <- louv_univ_detail %>% rename(NbrCurricula = n) # rename n column
+
+```
+
+Extract communities from the network of places 
+```{r warning = FALSE, message = FALSE}
+glvc1 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==1) # 35 nodes 
+glvc2 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==2) # 25 nodes
+glvc3 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==3) # 21 nodes
+glvc4 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==4) # 20 nodes 
+glvc5 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==5) # 46 nodes
+glvc6 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==6) # 21 nodes 
+glvc7 <- induced_subgraph(Pla1NetMC, V(Pla1NetMC)$group==7) # 10 nodes 
+```
+<br>
+Extract communities from the network of universities
+```{r warning = FALSE, message = FALSE}
+glvcu1 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==1) # 18 nodes 
+glvcu2 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==2) # 14 nodes 
+glvcu3 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==3) # 10 nodes
+glvcu4 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==4) # 21 nodes 
+glvcu5 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==5) # 14 nodes
+glvcu6 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==6) # 15 nodes
+glvcu7 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==7) # 6 nodes
+glvcu8 <- induced_subgraph(Pla2NetMC, V(Pla2NetMC)$group==8) # 6 nodes
+```
+
+
+## Label communities
+
+We chose to label the communities of places according to the college(s) that most frequently appear in the places included in each community. In order to identify the college(s) that give each community its coherence, we simply looked for the places that contain only one college and a high number of students. 
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail <- louv_places_detail %>% mutate(lvcluster = as.factor(lvcluster)) 
+louv_places_detail$cluster_name <- fct_recode(louv_places_detail$lvcluster,
+                                                  "Columbia" ="1",
+                                                  "Princeton-NYU"="2", 
+                                                  "Pennsylvania"="3",
+                                                  "Chicago" ="4", 
+                                                  "California-Cornell-Michigan"="5", 
+                                                  "Harvard-MIT" = "6",
+                                                  "Yale-Vanderbilt"= "7")
+
+```
+<br>
+Similarly, we labeled the communities of colleges according to the colleges that concentrated the largest number of curricula. In order to find them, we computed the number of curricula per college and we sorted the colleges in each cluster by decreasing order of importance. 
+
+```{r warning = FALSE, message = FALSE}
+
+louv_univ_detail <- louv_univ_detail %>% mutate(lvcluster = as.factor(lvcluster)) 
+louv_univ_detail$cluster_name <- fct_recode(louv_univ_detail$lvcluster,
+                                                  "Pennsylvania-Yale-Illinois" ="1",
+                                                  "Harvard-MIT"="2", 
+                                                  "California-Cornell"="3",
+                                                  "Columbia-NYU" ="4", 
+                                                  "Chicago"="5", 
+                                                  "Princeton-George Washington" = "6",
+                                                  "Michigan"= "7", 
+                                                  "Wisconsin-Purdue"= "8")
+
+```
+
+# Visual comparison 
+
+## Columbia-centered communities
+```{r warning = FALSE, message = FALSE}
+
+plot(glvc1, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5,
+     main="Places Group 1 (Columbia)")
+
+plot(glvcu4, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu4)*0.1, 
+     vertex.size= degree(glvcu4)*3, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 4 (Columbia-NYU)")
+
+```
+
+## Princeton-centered communities
+```{r warning = FALSE, message = FALSE}
+
+plot(glvc2, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5,
+     main="Places Group 2 (Princeton-NYU)")
+
+plot(glvcu6, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu6)*0.15, 
+     vertex.size= degree(glvcu6)*1.5, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 6 (Princeton-G.Wasghinton-Wooster-Northwestern)")
+
+
+```
+
+## Pennsylvania
+```{r warning = FALSE, message = FALSE}
+
+plot(glvc3, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5, # node size proportionate to node degree
+     main="Places Group 3 (Pennsylvania)")
+
+plot(glvcu1, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu1)*0.2, 
+     vertex.size= degree(glvcu1), # node size proportionate to node degree (in cluster)
+     main="Colleges Group 1 (Pennsylvania-Yale-Illinois)")
+
+```
+
+## Chicago 
+```{r warning = FALSE, message = FALSE}
+
+plot(glvc4, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5, 
+     main="Places Group 4 (Chicago)")
+
+plot(glvcu5, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu5)*0.1, 
+     vertex.size= degree(glvcu5)*3, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 5 (Chicago)")
+
+```
+
+## California-Cornell-Michigan
+```{r warning = FALSE, message = FALSE}
+
+plot(glvc5, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5,
+     main="Places Group 5 (California-Cornell-Michigan)")
+
+plot(glvcu3, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu3)*0.2, 
+     vertex.size= degree(glvcu3)*2, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 3 (California-Cornell)")
+
+plot(glvcu7, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu7)*0.5, 
+     vertex.size= degree(glvcu7)*5, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 7 (Michigan)")
+
+plot(glvcu8, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu8)*0.5, 
+     vertex.size= degree(glvcu8)*5, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 8 (Purdue)")
+
+```
+
+## Harvard-MIT (Technical curricula)
+```{r warning = FALSE, message = FALSE}
+plot(glvc6, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5, # node size proportionate to node degree
+     main="Places Group 6 (Harvard-MIT)")
+
+plot(glvcu2, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu2)*0.2, 
+     vertex.size= degree(glvcu2)*2, # node size proportionate to node degree (in cluster)
+     main="Colleges Group 2 (Harvard-MIT)")
+
+```
+
+## Yale
+```{r warning = FALSE, message = FALSE}
+plot(glvc7, vertex.label=V(Pla1NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = 0.5, 
+     vertex.size= 5, # node size proportionate to node degree
+     main="Places Group 7 (Yale-Vanderbilt)")
+
+plot(glvcu1, vertex.label=V(Pla2NetMC)$id,
+     vertex.label.color = "black", 
+     vertex.label.cex = degree(glvcu1)*0.2, 
+     vertex.size= degree(glvcu1), # node size proportionate to node degree (in cluster)
+     main="Colleges Group 1 (Pennsylvania-Yale-Illinois)")
+```
+
+
+# Summary tables
+
+## Network of places
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-j6zm{font-weight:bold;text-align:left;vertical-align:bottom}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-j6zm">No</th>
+    <th class="tg-j6zm">Label</th>
+    <th class="tg-j6zm">Size</th>
+    <th class="tg-j6zm">Shape</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-7zrl">PG1</td>
+    <td class="tg-7zrl">Columbia</td>
+    <td class="tg-7zrl">35</td>
+    <td class="tg-7zrl">Hairball</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG2</td>
+    <td class="tg-7zrl">Princeton-NYU</td>
+    <td class="tg-7zrl">25</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG3</td>
+    <td class="tg-7zrl">Pennsylvania</td>
+    <td class="tg-7zrl">21</td>
+    <td class="tg-7zrl">Hairball</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG4</td>
+    <td class="tg-7zrl">Chicago</td>
+    <td class="tg-7zrl">20</td>
+    <td class="tg-7zrl">Hairball</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG5</td>
+    <td class="tg-7zrl">California-Cornell-Michigan</td>
+    <td class="tg-7zrl">46</td>
+    <td class="tg-7zrl">Hybrid</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG6</td>
+    <td class="tg-7zrl">Harvard-MIT (Technical)</td>
+    <td class="tg-7zrl">26</td>
+    <td class="tg-7zrl">Hybrid</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG7</td>
+    <td class="tg-7zrl">Yale</td>
+    <td class="tg-7zrl">10</td>
+    <td class="tg-7zrl">Hairball</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl" colspan="4">PG&nbsp;&nbsp;&nbsp;= Place-based groups </td>
+  </tr>
+</tbody>
+</table>
+
+## Network of colleges
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-j6zm{font-weight:bold;text-align:left;vertical-align:bottom}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-j6zm">No</th>
+    <th class="tg-j6zm">Label</th>
+    <th class="tg-j6zm">Size</th>
+    <th class="tg-j6zm">Shape</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-7zrl">UG1</td>
+    <td class="tg-7zrl">Pennsylvania-Yale-Illinois</td>
+    <td class="tg-7zrl">18</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG2</td>
+    <td class="tg-7zrl">Harvard-MIT</td>
+    <td class="tg-7zrl">14</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG3</td>
+    <td class="tg-7zrl">California-Cornell</td>
+    <td class="tg-7zrl">10</td>
+    <td class="tg-7zrl">Bipolar</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG4</td>
+    <td class="tg-7zrl">Columbia-NYU</td>
+    <td class="tg-7zrl">21</td>
+    <td class="tg-7zrl">Star</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG5</td>
+    <td class="tg-7zrl">Chicago</td>
+    <td class="tg-7zrl">14</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG6</td>
+    <td class="tg-7zrl">Princeton-George Washington</td>
+    <td class="tg-7zrl">15</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG7</td>
+    <td class="tg-7zrl">Michigan</td>
+    <td class="tg-7zrl">6</td>
+    <td class="tg-7zrl">Star</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">UG8</td>
+    <td class="tg-7zrl">Purdue</td>
+    <td class="tg-7zrl">6</td>
+    <td class="tg-7zrl">Star</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl" colspan="4">UG&nbsp;&nbsp;&nbsp;= University-based groups</td>
+  </tr>
+</tbody>
+</table>
+
+## Correspondence table
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-2b7s{text-align:right;vertical-align:bottom}
+.tg .tg-j6zm{font-weight:bold;text-align:left;vertical-align:bottom}
+.tg .tg-7zrl{text-align:left;vertical-align:bottom}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-j6zm">PGNo</th>
+    <th class="tg-j6zm">PGLabel</th>
+    <th class="tg-j6zm">PGSize</th>
+    <th class="tg-j6zm">PGShape</th>
+    <th class="tg-j6zm">UGNo</th>
+    <th class="tg-j6zm">UGLabel</th>
+    <th class="tg-j6zm">UGSize</th>
+    <th class="tg-j6zm">UGShape</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-7zrl">PG1</td>
+    <td class="tg-7zrl">Columbia</td>
+    <td class="tg-7zrl">35</td>
+    <td class="tg-7zrl">Hairball</td>
+    <td class="tg-7zrl">UG4</td>
+    <td class="tg-7zrl">Columbia-NYU</td>
+    <td class="tg-7zrl">21</td>
+    <td class="tg-7zrl">Star</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG2</td>
+    <td class="tg-7zrl">Princeton-NYU</td>
+    <td class="tg-7zrl">25</td>
+    <td class="tg-7zrl">Chain</td>
+    <td class="tg-7zrl">UG6, UG4</td>
+    <td class="tg-7zrl">Princeton-George Washington, Columbia-NYU</td>
+    <td class="tg-2b7s">15, 21</td>
+    <td class="tg-7zrl">Chain, Star</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG3</td>
+    <td class="tg-7zrl">Pennsylvania</td>
+    <td class="tg-7zrl">21</td>
+    <td class="tg-7zrl">Hairball</td>
+    <td class="tg-7zrl">UG1</td>
+    <td class="tg-7zrl">Pennsylvania-Yale-Illinois</td>
+    <td class="tg-7zrl">18</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG4</td>
+    <td class="tg-7zrl">Chicago</td>
+    <td class="tg-7zrl">20</td>
+    <td class="tg-7zrl">Hairball</td>
+    <td class="tg-7zrl">UG5</td>
+    <td class="tg-7zrl">Chicago</td>
+    <td class="tg-7zrl">14</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG5</td>
+    <td class="tg-7zrl">California-Cornell-Michigan</td>
+    <td class="tg-7zrl">46</td>
+    <td class="tg-7zrl">Hybrid</td>
+    <td class="tg-7zrl">UG3, UG7</td>
+    <td class="tg-7zrl">California-Cornell, Michigan</td>
+    <td class="tg-2b7s">10, 6</td>
+    <td class="tg-7zrl">Bipolar</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG6</td>
+    <td class="tg-7zrl">Harvard-MIT (Technical)</td>
+    <td class="tg-7zrl">26</td>
+    <td class="tg-7zrl">Hybrid</td>
+    <td class="tg-7zrl">UG2</td>
+    <td class="tg-7zrl">Harvard-MIT (Technical)</td>
+    <td class="tg-7zrl">18</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+  <tr>
+    <td class="tg-7zrl">PG7</td>
+    <td class="tg-7zrl">Yale</td>
+    <td class="tg-7zrl">10</td>
+    <td class="tg-7zrl">Hairball</td>
+    <td class="tg-7zrl">UG1</td>
+    <td class="tg-7zrl">Pennsylvania-Yale-Illinois</td>
+    <td class="tg-7zrl">18</td>
+    <td class="tg-7zrl">Chain</td>
+  </tr>
+</tbody>
+</table>
+
+
+# Structural analysis
+
+These visual comparisons need to be substantiated with the analysis of communities structures based on their topographical metrics. For this structural analysis, we rely on the [following metrics](https://rpubs.com/pjmurphy/308024): 
+
+  * **Order**: number of nodes
+  * **Size**: number of edges
+  * **Diameter**: the length of the longest geodesic (i.e. the longest path to join the most distant nodes in the network)
+  * **Average distance**
+  * **Interconnectedness** or density (how densely connected are the nodes in each community)
+  * **Average Degree** (how many ties do the nodes have, on average, in each community)
+  * **Compactness/Breadth** (is the network generally more spaced out or bunched up?). Since igraph does not offer built-in function for this metrics, we will need to write our own function, relying on [this tutorial](https://rpubs.com/pjmurphy/308024). 
+  * **Transitivity** or balance, or clustering coefficient (how many triangles can we find in each community) 
+  * **Dominance and Egalitarianism** (to what extent is the community dominated by one or a few nodes?). There are several options to analyze the degree of dominance/egalitarianism in a network, principally two - centralization or standard deviation. In this tutorial, we will rely on the first option, focusing on eigenvector centrality.
+  
+We proceed in two steps: 
+
+  1. Extract these metrics for each community in the two networks. 
+  2. Apply [Principal Component Analysis (PCA) and hierarchical clustering (HCPC)](http://factominer.free.fr/more/HCPC_husson_josse.pdf) to identify structural profiles.
+
+## Place-based communities
+
+### Extract metrics
+
+#### Order (Number of nodes)
+```{r}
+
+order1 <- gorder(glvc1)
+order2 <- gorder(glvc2)
+order3 <- gorder(glvc3)
+order4 <- gorder(glvc4)
+order5 <- gorder(glvc5)
+order6 <- gorder(glvc6)
+order7 <- gorder(glvc7)
+
+order <- c(order1, order2, order3, order4, order5, order6, order7)
+order
+```
+#### Size (Number of edges)
+```{r}
+
+size1 <- gsize(glvc1)
+size2 <- gsize(glvc2)
+size3 <- gsize(glvc3)
+size4 <- gsize(glvc4)
+size5 <- gsize(glvc5)
+size6 <- gsize(glvc6)
+size7 <- gsize(glvc7)
+
+size <- c(size1, size2, size3, size4, size5, size6, size7)
+size
+```
+
+#### Diameter
+
+```{r}
+d1 <- diameter(glvc1) 
+d2 <- diameter(glvc2)  
+d3 <- diameter(glvc3) 
+d4 <- diameter(glvc4)
+d5 <- diameter(glvc5) 
+d6 <- diameter(glvc6) 
+d7 <- diameter(glvc7) 
+
+diameter <- c(d1, d2, d3, d4, d5, d6, d7)
+diameter
+```
+<br>
+Communities PG2 (Princeton-NYU), PG5 (California-Cornell-Michigan) and PG6 (Harvard-MIT) present larger diameters than other communities (6 and 5 respectively), which is directly related to their chain-based or hybrid structures. Large diameters tend to impede or reduce circulations between places in these groups. By contrast, hairball communities (PG1-Columbia) present smaller diameters (3), which implies that there were more intense circulations between Columbia graduates (members of the Columbia community). 
+We also notice that there is no linear relation between order (number of nodes) and diameter (longest path). Although PG1 (Columbia) and PG7 (Yale) have the same diameter (3), the former contains a larger number of nodes (35) than the latter (10). We can verify this observation by simply plotting order/diameter: 
+
+```{r}
+plot(order, diameter)
+```
+#### Average distance
+```{r}
+
+avdist1 <- average.path.length(glvc1)  
+avdist2 <- average.path.length(glvc2) 
+avdist3 <- average.path.length(glvc3) 
+avdist4 <- average.path.length(glvc4)
+avdist5 <- average.path.length(glvc5) 
+avdist6 <- average.path.length(glvc6) 
+avdist7 <- average.path.length(glvc7) 
+
+avgpath <- c(avdist1, avdist2, avdist3, avdist4, avdist5, avdist6, avdist7)
+avgpath
+```
+<br>
+The maximum distance between places is to be found in communities 5 (California-Cornell-Michigan) and 2 (Princeton-NYU) (>2). The minimum distance is to be found in communities 1 (Columbia) and 3 (Pennsylvania) (<1.2). Maximum distances are associated with chain-based (or hybrid-chain) structures , whereas minimum distances are associated with hairball structures.
+
+#### Interconnectness/density 
+
+How densely connected are the nodes (places) in each community?
+```{r}
+ed1 <- edge_density(glvc1) 
+ed2 <- edge_density(glvc2)  
+ed3 <- edge_density(glvc3)  
+ed4 <- edge_density(glvc4)  
+ed5 <- edge_density(glvc5)
+ed6 <- edge_density(glvc6) 
+ed7 <- edge_density(glvc7)  
+
+density <- c(ed1, ed2, ed3, ed4, ed5, ed6, ed7)
+density
+```
+<br>
+The maximum densities are to be found in communities PG1 (Columbia) and PG3 (Pennsylvania) (> 0.8). They are clearly associated with hairball structures. Minimum densities are to be found in communities PG5 (California-Cornell-Michigan) and PG2 (Princeton-NYU) (<0.2). They are associated with chain-based (or hybrid chain) structures.
+
+#### Average Degree
+
+How many ties do the nodes have, on average, in each community? 
+```{r}
+deg1 <- mean(degree(glvc1))  
+deg2 <- mean(degree(glvc2))  
+deg3 <- mean(degree(glvc3))   
+deg4 <- mean(degree(glvc4)) 
+deg5 <- mean(degree(glvc5)) 
+deg6 <- mean(degree(glvc6)) 
+deg7 <- mean(degree(glvc7))
+
+avgdegree <- c(deg1, deg2, deg3, deg4, deg5, deg6, deg7)
+avgdegree
+```
+<br>
+The largest average degree is to be found in community PG1 (Columbia: 28.57), the smallest in PG2 (Princeton-NYU) (4.72). Larger average degrees are associated with hairball structures (PG1-Columbia, PG3-Pennsylvania, and PG4-Chicago), whereas smaller average degrees are associated with chain-based structures (e.g. PG2-Princeton-NYU). 
+
+#### Compactness/Breadth
+
+To what extent are the communities spaced out or bunched up? Since igraph does not offer built-in function for this metrics, we will need to write our own function, relying on [this tutorial](https://rpubs.com/pjmurphy/308024): 
+```{r}
+
+# Create function
+Compactness <- function(g) {
+  gra.geo <- distances(g) ## get geodesics
+  gra.rdist <- 1/gra.geo  ## get reciprocal of geodesics
+  diag(gra.rdist) <- NA   ## assign NA to diagonal
+  gra.rdist[gra.rdist == Inf] <- 0 ## replace infinity with 0
+  # Compactness = mean of reciprocal distances
+  comp.igph <- mean(gra.rdist, na.rm=TRUE) 
+  return(comp.igph)
+}
+
+# Apply function to each community of places
+comp1 <- Compactness(glvc1) 
+comp2 <- Compactness(glvc2) 
+comp3 <- Compactness(glvc3)
+comp4 <- Compactness(glvc4)
+comp5 <- Compactness(glvc5)
+comp6 <- Compactness(glvc6)
+comp7 <- Compactness(glvc7) 
+
+compactness <- c(comp1, comp2, comp3, comp4, comp5, comp6, comp7)
+compactness
+```
+<br>
+Hairball-type communities (PG1-Columbia, PG3-Pennsylvania and to a lesser extent, PG4-Chicago and PG7-Yale) are naturally more compact than chain-based (PG2-Princeton-NYU) and hybrid (PG5-California-Cornell-Michigan) ones. 
+
+#### Transitivity (Clustering Coefficient)
+
+How many triangles can we find in each community? To what extent are they likely to break down into subgroups?
+```{r}
+trans1 <- transitivity(glvc1) 
+trans2 <- transitivity(glvc2)
+trans3 <- transitivity(glvc3) 
+trans4 <- transitivity(glvc4) 
+trans5 <- transitivity(glvc5) 
+trans6 <- transitivity(glvc6)
+trans7 <- transitivity(glvc7) 
+
+transitivity <- c(trans1, trans2, trans3, trans4, trans5, trans6, trans7)
+transitivity 
+```
+<br>
+Hairball communities (PG1-Columbia, PG3-Pennsylvania, PG6-Harvard-MIT, PG4-Chicago) generally contain more triangles than chain-based communities (PG2-Princeton-NYU, PG5-California-Cornell-Michigan). (Higher transitivity scores (close to 1) mean that the networks contain a large number of triangles and are more likely to break down into subgroups.)
+
+#### Dominance/Egalitarism
+
+To what extent are the communities dominated by one or a few nodes?
+```{r}
+
+eigen1 <- centr_eigen(glvc1)$centralization
+eigen2 <- centr_eigen(glvc2)$centralization
+eigen3 <- centr_eigen(glvc3)$centralization
+eigen4 <- centr_eigen(glvc4)$centralization
+eigen5 <- centr_eigen(glvc5)$centralization
+eigen6 <- centr_eigen(glvc6)$centralization
+eigen7 <- centr_eigen(glvc7)$centralization
+
+dominance <- c(eigen1, eigen2, eigen3, eigen4, eigen5, eigen6, eigen7)
+dominance
+
+```
+<br>
+Smaller values implies lower dominance and more egalitarianism. Based on these metrics (eigenvector centrality), we observe that chain-based communities (PG5-California-Cornell-Michigan and PG2-Princeton-NYU) are more dominated and less "egalitarian" than hairball structures (PG1-Columbia and PG3-Pennsylvania). 
+
+### Compile metrics
+
+Finally, we compile these metrics in order to identify structural profiles based on their possible combinations using PCA/HCPC.
+
+```{r}
+
+louvain_places_pca <- cbind(order, size, diameter, avgpath, density, avgdegree, compactness, transitivity, dominance) 
+rownames(louvain_places_pca) <- c("PG1.Columbia", "PG2.Princeton-NYU", "PG3.Pennsylvania", "PG4.Chicago","PG5.California-Cornell-Michigan","PG6.Harvard","PG7.Yale")
+write.csv(louvain_places_pca, file="louvain_places_pca.csv") 
+louvain_places_pca <- read.csv("~/Places AUC/Markdown/Data/louvain_places_pca.csv", row.names=1)
+
+```
+
+### Identify profiles
+
+Load packages
+```{r}
+library(FactoMineR)
+library(Factoshiny)
+library(factoextra)
+```
+
+#### PCA
+```{r}
+res.PCA<-PCA(louvain_places_pca,graph=FALSE)
+plot.PCA(res.PCA,choix='var',title="PCA Graph of Variables (Topographical metrics)")
+```
+<br>
+The two dimensions capture 95% of information - 74% on the first dimension and 21% on the second. Six dimensions are necessary to capture 100% information. 
+
+On the graph of variables, density, transitivity and compactness are positively and strongly correlated with the first dimension, whereas diameter, average path and dominance are negatively correlated with the same dimension. Order and size are positively and strongly correlated to the second dimension. Average degree is positively correlated to the two dimensions. 
+
+Dense, compact and more egalitarian communities with high transitivity (many triangles) and average degree are situated on the right side of the graph, whereas sparse communities, with long average path (geodesic distance) dominated by one or few nodes  are located on the left side of the graph. Communities with large number of nodes and edges (large order and size) are situated at the top of the graph (above the x axis), whereas smaller communities (with fewer nodes and edges) are located below.
+
+```{r}
+plot.PCA(res.PCA,title="PCA Graph of Individuals (Communities of places")
+```
+
+The former group (including more compact and egalitarian communities) is associated with hairball style communities, e.g. PG1-Columbia and PG3-Pennsylvania. The latter group (more sparse and less egalitarian communities) is associated with chain-based structures e.g. PG5-California-Cornell-Michigan and PG2-Princeton-NYU. 
+
+The Columbia community (PG1) in the right-hand corner contains the largest number of nodes (places), whereas the California-Cornell-Michigan community (PG5) in the left hand corner contains the largest number of edges. Yale (PG7) and Chicago (PG4) communities contain fewer edges and nodes, since they are located at the bottom of the graph. The Harvard community (PG6) is closer the mean profile since it coïncides with the point of origin. 
+
+In the next section, we perform a hierarchical clustering (HCPC) on all six dimensions in order to group the communities according to their structural profiles. 
+
+#### HCPC
+```{r}
+res.PCA<-PCA(louvain_places_pca,ncp=6,graph=FALSE)
+res.HCPC<-HCPC(res.PCA,nb.clust=3,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC,choice='tree',title='Hierarchical Tree')
+plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor Map')
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D Tree on Factor Map')
+```
+<br>
+The groups were identified:  
+
+  1. **Cluster 1: Chain-based communities** characterized by long average path and strong dominance (PG5-California-Cornell-Michigan, PG2-Princeton-NYU)
+  2. **Cluster 2: Hairball communities** characterized by high density, compactness and transitivity (hybrid structures) (PG3-Pennylvania, PG4-Chicago, PG6-Harvard, PG7-Yale). 
+  3. **Cluster 3: Columbia** stands out as a hairball community characterized by a larger number of edges, higher average degree, homophily and density than other communities. 
+
+Warning: the partition is not significantly determined by topographical metrics (p-value >0.05).
+
+## College-based communities
+
+### Extract metrics
+
+#### Order (Number of nodes)
+```{r}
+
+order1 <- gorder(glvcu1)
+order2 <- gorder(glvcu2)
+order3 <- gorder(glvcu3)
+order4 <- gorder(glvcu4)
+order5 <- gorder(glvcu5)
+order6 <- gorder(glvcu6)
+order7 <- gorder(glvcu7)
+order8 <- gorder(glvcu8)
+
+order2 <- c(order1, order2, order3, order4, order5, order6, order7, order8)
+order2
+```
+
+#### Size (Number of edges)
+```{r}
+
+size1 <- gsize(glvcu1)
+size2 <- gsize(glvcu2)
+size3 <- gsize(glvcu3)
+size4 <- gsize(glvcu4)
+size5 <- gsize(glvcu5)
+size6 <- gsize(glvcu6)
+size7 <- gsize(glvcu7)
+size8 <- gsize(glvcu8)
+
+size2 <- c(size1, size2, size3, size4, size5, size6, size7, size8)
+size2
+```
+<br>
+The Columbia-NYU community (UG4) contains the largest number of nodes (21) and edges (29), followed by Pennsylvania-Yale-Illinois (UG1) and Princeton-George Washington (UG6) constellations (18 and 15 nodes, 21 and 20 edges, respectively). The Michigan and Purdue communities are the smallest ones based on the number of nodes and edges they include (6 nodes each, 5 and 6 edges, respectively). Harvard-MIT (UG2), Chicago (UG5) and California-Cornell (UG3) stand in between with 14 and 10 nodes, 14, 16 and 12 edges respectively. 
+
+#### Diameter
+
+```{r}
+d1 <- diameter(glvcu1) 
+d2 <- diameter(glvcu2)  
+d3 <- diameter(glvcu3) 
+d4 <- diameter(glvcu4)
+d5 <- diameter(glvcu5) 
+d6 <- diameter(glvcu6) 
+d7 <- diameter(glvcu7) 
+d8 <- diameter(glvcu8)
+
+diameter2 <- c(d1, d2, d3, d4, d5, d6, d7, d8)
+diameter2
+```
+<br>
+The Pennsylvania-Yale-Illinois constellation (UG1) presents the largest diameter (6), followed by the  Harvard-MIT (UG2), Columbia-NYU (UG4) and Princeton-George Washington (UG6) communities (5 for each). Except for Columbia, large diameters are generally associated with chain-based structures which impede or reduce circulations.   
+Bipolar (UG3-California-Cornell) and star-like communities (UG7-Michigan, UG8-Purdue) present smaller diameters (3), which faciliates circulations within these communities. We notice that there is no linear relation between order (number of nodes) and diameter. For example, although the UG4 (Columbia-NYU) contain more nodes than UG2 (Harvard-MIT) and UG6 (Princeton-George Washington) (21, 15 and 15 respectively) the three communities presents exactly the same diameter (5)
+This can be verified by simply plotting order/diameter: 
+```{r}
+plot(order2, diameter2)
+```
+#### Average distance
+```{r}
+
+avdist1 <- average.path.length(glvcu1)  
+avdist2 <- average.path.length(glvcu2)  
+avdist3 <- average.path.length(glvcu3) 
+avdist4 <- average.path.length(glvcu4)
+avdist5 <- average.path.length(glvcu5) 
+avdist6 <- average.path.length(glvcu6) 
+avdist7 <- average.path.length(glvcu7) 
+avdist8 <- average.path.length(glvcu8) 
+
+avgpath2 <- c(avdist1, avdist2, avdist3, avdist4, avdist5, avdist6, avdist7, avdist8)
+avgpath2
+```
+<br>
+The maximum distance between colleges is to be found in the UG6 (Princeton-George Washington) and UG1 (Pennsylvania-Yale-Illinois) constellations (>2.5). Minimum distances occur in communities UG7 (Michigan) and UG8 (Purdue) (<2) (and to a lesser extent, UG1-Columbia, close to 2) Maximum distances are associated with chain-based or hybrid structures, whereas minimum distances are associated with star-like communities. 
+
+#### Interconnectness/density 
+
+How densely connected are the nodes (places) in each community?
+```{r}
+ed1 <- edge_density(glvcu1) 
+ed2 <- edge_density(glvcu2)  
+ed3 <- edge_density(glvcu3)  
+ed4 <- edge_density(glvcu4)  
+ed5 <- edge_density(glvcu5)
+ed6 <- edge_density(glvcu6) 
+ed7 <- edge_density(glvcu7)  
+ed8 <- edge_density(glvcu8)
+
+density2 <- c(ed1, ed2, ed3, ed4, ed5, ed6, ed7, ed8)
+density2
+```
+<br>
+Maximum densities are to be found in communities UG8 (Purdue) and UG7 (Michigan) (> 0.3). They are associated with star-like structures and highly specialized curricula (engineers, professionals). Minimum densities are to be found in constellations UG1 (California-Cornell) and UG4 (Princeton-NYU) (<0.2). They are associated with chain-based (or hybrid) structures and less specialized curricula (humanities, sciences). 
+
+#### Average Degree
+
+How many ties do the nodes have, on average, in each community? 
+```{r}
+deg1 <- mean(degree(glvcu1))  
+deg2 <- mean(degree(glvcu2))  
+deg3 <- mean(degree(glvcu3))   
+deg4 <- mean(degree(glvcu4)) 
+deg5 <- mean(degree(glvcu5)) 
+deg6 <- mean(degree(glvcu6)) 
+deg7 <- mean(degree(glvcu7))
+deg8 <- mean(degree(glvcu8))
+
+avgdegree2 <- c(deg1, deg2, deg3, deg4, deg5, deg6, deg7, deg8)
+avgdegree2
+```
+<br>
+The largest average degree (2.76) is to be found in the Columbia community, the smallest (1.66) the Michigan community (UG7). There appears to be no clear relation between average degree and structures in college-based communities. Columbia and Michigan communities both present star-like structures.
+
+#### Compactness/Breadth
+
+To what extent are the communities spaced out or bunched up? Since igraph does not offer built-in function for this metrics, we will need to write our own function, relying on [this tutorial](https://rpubs.com/pjmurphy/308024): 
+```{r}
+
+# Create function
+Compactness <- function(g) {
+  gra.geo <- distances(g) ## get geodesics
+  gra.rdist <- 1/gra.geo  ## get reciprocal of geodesics
+  diag(gra.rdist) <- NA   ## assign NA to diagonal
+  gra.rdist[gra.rdist == Inf] <- 0 ## replace infinity with 0
+  # Compactness = mean of reciprocal distances
+  comp.igph <- mean(gra.rdist, na.rm=TRUE) 
+  return(comp.igph)
+}
+
+# Apply function to each community of places
+comp1 <- Compactness(glvcu1) 
+comp2 <- Compactness(glvcu2) 
+comp3 <- Compactness(glvcu3)
+comp4 <- Compactness(glvcu4)
+comp5 <- Compactness(glvcu5)
+comp6 <- Compactness(glvcu6) 
+comp7 <- Compactness(glvcu7) 
+comp8 <- Compactness(glvcu8)
+
+compactness2 <- c(comp1, comp2, comp3, comp4, comp5, comp6, comp7, comp8)
+compactness2
+```
+<br>
+Star-like, specialized communities (UG8-Purdue, UG7-Michigan) present higher compactness than others.  
+
+#### Transitivity (Clustering Coefficient)
+
+How many triangles can we find in each community? To what extent are they likely to break down into subgroups?
+```{r}
+trans1 <- transitivity(glvcu1) 
+trans2 <- transitivity(glvcu2)
+trans3 <- transitivity(glvcu3) 
+trans4 <- transitivity(glvcu4) 
+trans5 <- transitivity(glvcu5) 
+trans6 <- transitivity(glvcu6)
+trans7 <- transitivity(glvcu7) 
+trans8 <- transitivity(glvcu8)
+
+transitivity2 <- c(trans1, trans2, trans3, trans4, trans5, trans6, trans7, trans8)
+transitivity2 
+```
+<br>
+Communities UG6 (Princeton-George Washington), UG8 (Purdue) and UG3 (California-Cornell) present higher transitivity than other communities. UG7 (Michigan) does not contain any triangle (null transivity). There is no clear relation between transitivity and global shape and no correspondence between transivity scores in the two networks. 
+
+#### Dominance/Egalitarism
+
+To what extent are the communities dominated by one or a few nodes?
+```{r}
+
+eigen1 <- centr_eigen(glvcu1)$centralization
+eigen2 <- centr_eigen(glvcu2)$centralization
+eigen3 <- centr_eigen(glvcu3)$centralization
+eigen4 <- centr_eigen(glvcu4)$centralization
+eigen5 <- centr_eigen(glvcu5)$centralization
+eigen6 <- centr_eigen(glvcu6)$centralization
+eigen7 <- centr_eigen(glvcu7)$centralization
+eigen8 <- centr_eigen(glvcu8)$centralization
+
+dominance2 <- c(eigen1, eigen2, eigen3, eigen4, eigen5, eigen6, eigen7, eigen8)
+dominance2
+
+```
+<br>
+Communities UG4-Columbia-NYU, UG1-Pennsylvania-Yale-Illinois and UG2-Harvard-MIT are less egalitarian than others. Except for Columbia (UG4), chain-based communities generally present higher dominance than star-like or bipolar communities. We observe a negative correspondence between place-based and college-based communities from the perspective of dominance. For example, Columbia and Pennsylvania communities are less egalitarian than other college-based communities, whereas in the network of places, they are the most egalitarian of all communities.  
+
+### Compile metrics
+
+Finally, we compile these metrics in order to identify structural profiles based on their possible combinations using PCA/HCPC.
+
+```{r}
+
+louvain_univ_pca <- cbind(order2, size2, diameter2, avgpath2, density2, avgdegree2, compactness2, transitivity2, dominance2) 
+rownames(louvain_univ_pca) <- c("UG1.Pennsylvania-Yale-Illinois", "UG2.Harvard-MIT", "UG3.California-Cornell", "UG4.Columbia-NYU","UG5.Chicago","UG6.Princeton-George Washington","UG7.Michigan", "UG8.Purdue")
+write.csv(louvain_univ_pca, file="louvain_univ_pca.csv") 
+louvain_univ_pca <- read.csv("~/Places AUC/Markdown/Data/louvain_univ_pca.csv", row.names=1)
+
+```
+
+### Identify profiles
+
+Load packages
+```{r}
+library(FactoMineR)
+library(Factoshiny)
+library(factoextra)
+```
+
+### Identify profiles
+
+#### PCA
+```{r}
+res.PCA<-PCA(louvain_univ_pca,graph=FALSE)
+plot.PCA(res.PCA,choix='var',title="PCA Graph of Variables (Topographical metrics)")
+```
+<br>
+The two dimensions capture 89% of information - 70% on the first dimension and 19% on the second. Seven dimensions are necessary to capture 100% information. 
+On the graph of variables, diameter, order, size and average path are positively correlated with the first dimension,  whereas density, and compactness are negatively correlated with the same dimension. Transitivity is positively and strongly associated with the second dimension. Average degree is positively correlated to the two dimensions, whereas dominance is positively associated with the first dimension, but  negatively with the second.
+
+```{r}
+plot.PCA(res.PCA,title="PCA Graph of Individuals (Communities of colleges")
+```
+
+Large and loose communities characterized by a large number of nodes, edges, and diameter, but low density and compactness, are located on the right side of the graph, whereas small but dense and compact communities are located on the opposite (left side). The former group essentially includes the Columbia community (UG4) and the Pennsylvania-Yale-Illinois constellation (UG1). The latter refers to Purdue (UG8) and California-Cornell (UG3) communities. The Princeton constellation (UG6) is characterized by a large average degree and located in the top right hand corner on the opposite of the Michigan community (UG7). The highly dominated Harvard-MIT community (UG2) is located in the bottom right hand corner. As it is closer to the point of origin, the Chicago community (UG5) most strongly represents the mean profile. 
+
+In the next section, we perform a hierarchical clustering (HCPC) on all seven dimensions in order to group the communities according to their structural profiles. 
+
+#### HCPC
+```{r}
+res.PCA<-PCA(louvain_univ_pca,ncp=7,graph=FALSE)
+res.HCPC<-HCPC(res.PCA,nb.clust=4,consol=FALSE,graph=FALSE)
+plot.HCPC(res.HCPC,choice='tree',title='Hierarchical Tree')
+plot.HCPC(res.HCPC,choice='map',draw.tree=FALSE,title='Factor Map')
+plot.HCPC(res.HCPC,choice='3D.map',ind.names=FALSE,centers.plot=FALSE,angle=60,title='3D Tree on Factor Map')
+```
+
+<br>
+
+Four classes were detected: 
+
+  1. Dense, small and egalitarian communities with lower average degree (UG7.Michigan)
+  2. Dense though smaller and more egalitarian communities (UG3.California-Cornell, UG8.Purdue)
+  3. Large but looser and more egalitarian communities (UG6.Princeton-George Washington) 
+  4. Large and strongly dominated communities (UG1.Pennsylvania-Yale-Illinois, UG5.Chicago, UG2.Harvard-MIT, UG4.Columbia-NYU) 
+  
+Note: The partition is most strongly characterized by dominance (p value 0.00066). 
+
+In order to enrich this structural analysis, the next section seeks to better characterize the profiles of community members. It provides a method for visually comparing communities membership. Since we do not have attributes for colleges, we will focus on the communities of places (PG). 
+
+# Membership
+
+For this analysis, we rely on a dataset which was created earlier in this tutorial (louv_places_detail). It contains the list of places with their quantitative and qualitative attributes, and the cluster which they belong to (see "Community detection - Extract Communities"). 
+
+## Quantitative attributes
+
+### Number of students
+
+How many students, on average, did the place contain in each community? Did some communities contain more populated places than others, which were rather defined by singular trajectories? We use boxplots below to compare the average number and the range of students in each community. 
+```{r warning = FALSE, message = FALSE}
+louv_places_detail %>%
+  ggplot(aes(reorder(cluster_name, NbElements), NbElements, color = cluster_name)) +
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  coord_flip() +
+  labs(x = "Communities", y = "Number of students per place") +   
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni Communities (Louvain)", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+```
+<br>
+The Yale-Vanderbilt community ranks first based on the average number of students, but it presents a lower dispersion than California, Harvard, Pennsylvania, Columbia, and Princeton. The Chicago community is more homogeneous with fewer students per place (maximum of 5). 
+
+### Number of colleges
+
+How many colleges did the students attended, on average, in each community? 
+
+```{r warning = FALSE, message = FALSE}
+louv_places_detail %>%
+  ggplot(aes(reorder(cluster_name, NbSets), NbSets, color = cluster_name)) +
+  geom_boxplot(alpha = 0.8, show.legend = FALSE) +
+  coord_flip() +
+  labs(x = "Communities", y = "Number of colleges per place") +  
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni Communities (Louvain)", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+```
+<br>
+The ranking based on college attendance follows the exact reverse order. The members of the Yale-Vanderbilt community attended fewer colleges than then average (less than 2). The Columbia community presents the widest possible range of curricula. Other communities point to intermediate situations. The Princeton-NYU community shows the maximum dispersion but most of its members attended less than two universities. 
+
+### Students and colleges
+
+```{r warning = FALSE, message = FALSE}
+ggplot(data = louv_places_detail, mapping = aes(x = NbSets, y = NbElements, color = cluster_name)) + 
+  geom_jitter(show.legend = FALSE) + 
+  facet_wrap(~ cluster_name) +
+  labs(x = "Number of colleges per place", y = "Number of students per place") +
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni Communities (Louvain)", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936")
+```
+<br>
+If we combine the number of students with the number of colleges in each community, three profiles can be defined:
+
+  1. Columbia, Princeton-NYU, and Pennsylvania communities generally include academic places with fewer students and a wider range of colleges than the average.
+  2. California, Harvard, and to a lesser extent, Yale included more students who attended fewer universities. 
+  3. The Chicago community stands out with fewer students attending fewer colleges. 
+
+## Qualitative attributes
+
+### Nationality
+
+```{r warning = FALSE, message = FALSE}
+louv_places_detail %>% 
+  group_by(cluster_name, Nationality) %>% 
+  count() %>%
+  ggplot(aes(reorder(Nationality, n), n, fill = Nationality)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni Communities (Louvain)", 
+       fill = "Students' nationalities",
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+```
+<br>
+
+The above plots reveal three national profiles: 
+
+  1. The Pennsylvania and Yale-Vanderbilt communities included the largest proportions of purely Chinese academic curricula (71% for Pennsylvania, 60% for Yale). 
+  2. On the opposite, Princeton-NYU and to a lesser extent, Harvard-MIT are dominated by non-Chinese places dominate. 
+  3. Columbia, California, and Chicago present a "cascade" distribution with a steady decline from Chinese to non-Chinese, and finally multinational places. Although strictly Chinese curricula dominate, the distribution is more balanced than in other communities. 
+
+### Region/Mobility
+
+
+```{r warning = FALSE, message = FALSE}
+
+# First, we create a function that serves to define integer breaks on the *x* axes of the plots: 
+  
+integer_breaks <- function(n = 5, ...) {
+  fxn <- function(x) {
+    breaks <- floor(pretty(x, n, ...))
+    names(breaks) <- attr(breaks, "labels")
+    breaks
+  }
+  return(fxn)
+}
+
+```
+
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, Region_nbr) %>% 
+  count() %>%
+  ggplot(aes(reorder(Region_nbr, n), n, fill = Region_nbr)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Geographical coverage", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+The plots reveal three main regional profiles: 
+
+  1. Columbia and Pennsylvania present a larger proportion of cross-region trajectories.  
+  2. On the opposite, Chicago and Yale are rather confined to a single area.  
+  3. In between, Harvard-MIT and Princeton-NYU present an equal proportion of mono- and multi-regional places. 
+  
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, Mobility) %>% 
+  count() %>%
+  ggplot(aes(reorder(Mobility, n), n, fill = Mobility)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  scale_fill_discrete(
+    limits = c("INTER", "INTRA", "NULL"),
+    labels = c("Inter-region (high)", "Intra-region (low)", "Null (same college)")
+  ) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Geographical mobility", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+
+```
+<br>
+Students' mobility provides a finer perspective on the geographical profile of academic communities: 
+
+  1. Columbia, Pennsylvania, and Harvard-MIT communities present the same "cascade" distribution as we observed for nationalities, with a gradual decrease from highly mobile students (inter-region mobility), to medium- and finally low-mobility students. 
+  2. The Princeton-NYU community is split into the two extreme types of mobility (inter-region or null)
+  3. The Chicago community is dominated by intra-region (Midwest) mobility 
+  4. The three levels of mobility are equally represented in the Yale-Vanderbilt community.  
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, Region_code) %>% 
+  count() %>%
+  ggplot(aes(reorder(Region_code, n), n, fill = Region_code)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  scale_fill_discrete(
+    limits = c("EAST", "EM", "EO", "MID", "MO", "OTHER", "OTHER - US"),
+    labels = c("East Coast", "East-Midwest", "East-Other", "Midwest", "Mid-Other", "Other (non-USA)", "Other (USA)")
+  ) +
+  theme(legend.position = c(0.6, .17), 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=0.8)) +
+  guides(fill=guide_legend(ncol=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Geographical coverage", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+A closer examination of the region of study reveals three main regional groups: 
+
+  1. The Harvard-MIT, Columbia, Pennsylvania, and Princeton-NYU communities are "naturally" centered on the East coast, including combinations such as East-Midwest or East-Other (other regions in the Unted States). 
+  2. By the same token, the California and Chicago communities are "naturally" centered on the Midwest and other regions. The California community also include the largest proportions of curricula outside of the United States. 
+  3. The Yale-Venderbilt community does not present any clear geographical pattern. 
+
+Finally, the two sets of plots below combine the degree of mobility with the region of study: 
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail$region_label <- factor(louv_places_detail$Region_code, levels = c("EAST", "EM", "EO", "MID", "MO", "OTHER", "OTHER - US"),
+                                 labels = c("East Coast", "East-Midwest", "East-Other", "Midwest", "Mid-Other", "Other (non-USA)", "Other (USA)"))
+
+louv_places_detail %>% 
+  group_by(cluster_name, Region_nbr) %>% 
+  count(region_label) %>%
+  ggplot(aes(reorder(cluster_name, n), n, fill = region_label)) +
+  geom_col(alpha = 0.8, show.legend = TRUE, position = "dodge") +
+  facet_grid(Region_nbr ~ cluster_name, scales = "free") + 
+  scale_y_continuous(breaks = integer_breaks())+
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(nrow=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Region of study", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+
+louv_places_detail %>% 
+  group_by(cluster_name, Mobility) %>% 
+  count(region_label) %>%
+  ggplot(aes(reorder(cluster_name, n), n, fill = region_label)) +
+  geom_col(alpha = 0.8, show.legend = TRUE, position = "dodge") +
+  facet_grid(Mobility ~ cluster_name, scales = "free") + 
+  scale_y_continuous(breaks = integer_breaks())+
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(nrow=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Geographical mobility", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+
+
+### Period of study
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, period_nbr) %>% 
+  count() %>%
+  ggplot(aes(reorder(period_nbr, n), n, fill = period_nbr)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  scale_fill_discrete(
+    limits = c("DIAC", "SYNC"),
+    labels = c("Diachronic", "Synchronic")
+  ) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Community detection (Louvain algorithm)", 
+       fill = "Period of study", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+The above plots suggest a strong generational influence on the formation of alumni networks. Indeed, all communities are dominated by students who attended the same colleges during the same period. The Yale and California communities present the largest proportions of such "synchronic" curricula (over 20%). On the opposite, Columbia, Harvard, and Chicago attracted students from more diverse generations (synchronic places represent less than 15%). The Pennsylvania and NYU-Princeton communities present an intermediate situation. 
+
+```{r warning = FALSE, message = FALSE}
+louv_places_detail %>% 
+  group_by(cluster_name, period_group) %>% 
+  count() %>%
+  ggplot(aes(reorder(period_group, n), n, fill = period_group)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(ncol=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Period of study",
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+A closer examination of the period of study reveals that younger generations of students, especially post-WWI, dominated in the Princeton-NYU and Chicago communities. On the opposite, California, Pennsylvania, and Yale-Vanderbilt include a significant proportion of earlier generations (pre-1909). Pre-Boxer students, however, are represented in all communities. Finally, Columbia and Harvard-MIT present a "cascade" distribution, with decreasing membership as we move backward in time. 
+
+The final plot combines the time scope with the exact period of study: 
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail$period_label <- factor(louv_places_detail$period_nbr, levels = c("DIAC", "SYNC"),
+                  labels = c("Diachronic", "Synchronic"))
+
+louv_places_detail %>% 
+  group_by(cluster_name, period_label) %>% 
+  count(period_group) %>%
+  ggplot(aes(reorder(cluster_name, n), n, fill = period_group)) +
+  geom_col(alpha = 0.8, show.legend = TRUE, position = "dodge") +
+  facet_grid(period_label ~ cluster_name, scales = "free") + 
+  scale_y_continuous(breaks = integer_breaks())+
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(nrow=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Period of study", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+
+### Academic specialization
+
+Did academic communities specialize in particular fields of study? 
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, field_nbr) %>% 
+  count() %>%
+  ggplot(aes(reorder(field_nbr, n), n, fill = field_nbr)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=12),
+        legend.text = element_text(size=10), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Academic specialization (range)", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+Single-field curricula dominated in all communities. California, Princeton-NYU, and Yale-Vanderbilt presented a larger share of multidisciplinary curricula than other communities(20%). Let's have closer look at their disciplinary profiles.  
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, field_group) %>% 
+  count() %>%
+  ggplot(aes(reorder(field_group, n), n, fill = field_group)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .17), 
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=6), 
+        legend.box.background = element_rect(color="darkgrey", size=0.8)) +
+  guides(fill=guide_legend(ncol=4)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Field of study", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+Finally, the plots below combine the range of specialization with the dominant field of study in each community: 
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, field_nbr) %>% 
+  count(field_group) %>%
+  ggplot(aes(reorder(cluster_name, n), n, fill = field_group)) +
+  geom_col(alpha = 0.8, show.legend = TRUE, position = "dodge") +
+  facet_grid(field_nbr ~ cluster_name, scales = "free") + 
+  scale_y_continuous(breaks = integer_breaks())+
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size=8),
+        legend.text = element_text(size=6), 
+        legend.box.background = element_rect(color="darkgrey", size=0.8)) +
+  guides(fill=guide_legend(nrow=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Field of study", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+To sum up, single-field curricula present three possible combinations: 
+
+  1. In the Yale-Vanderbilt community, single-field curricula did not include any professional graduates and remained focused on Humanities and Sciences. 
+  2. On the opposite, Chicago and California communities present the widest possible spectrum of disciplines, including professional training and engineering. 
+  3. The remaining communities include a combination of Humanities, Sciences and Professional graduates. 
+  
+Multifield curricula present five possible combinations, from the narrower to the wider range of choices: 
+
+  1. Two disciplines: Yale (Hum-Pro, Hum-Pro-Sci) and Chicago (Hum-Pro-Sci, Sci-Pro)
+  2. Three disciplines: Columbia (Sci-Pro, Hum-Pro-Sci, all)
+  3. Four disciplines: Pennsylvania (Hum-Sci, Hum-Pro-Sci, Pro-Eng, Sci-Pro) and Harvard (Hum-Pro, Pro-Eng, Hum-Sci-Eng, All) 
+  4. Five disciplines: Princeton-NYU (all except professional-engineering and science-professional) and California (Hum-Pro, Hum-Sci-Eng, Hum-Pro-Sci), which placed a greater emphasis on engineering and professional training.
+
+### Level of qualification
+
+Did the communities differ according to the academic degrees obtained by their members? Which communities presented the highest levels of qualification? 
+```{r warning = FALSE, message = FALSE}
+
+
+louv_places_detail %>% 
+  group_by(cluster_name, LevelNbr) %>% 
+  count() %>%
+  ggplot(aes(reorder(LevelNbr, n), n, fill = LevelNbr)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .2), 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Level of qualification (range)", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+
+louv_places_detail %>% 
+  group_by(cluster_name, degree_high) %>% 
+  count() %>%
+  ggplot(aes(reorder(degree_high, n), n, fill = degree_high)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .15), 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(ncol=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Highest degree", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+All communities include graduates with equivalent levels of qualification. California, Yale, and Harvard-MIT present a wider range of degrees than other communities (19-20% of multilevel curricula), especially Pennsvlvania and Chicago (only 10%).   
+
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, degree_high) %>% 
+  count() %>%
+  ggplot(aes(reorder(degree_high, n), n, fill = degree_high)) +
+  geom_col(alpha = 0.8, show.legend = TRUE) +
+  facet_wrap(~ cluster_name) + 
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = c(0.6, .15), 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(ncol=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Highest degree", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+<br>
+Doctors dominate in the California and Chicago communities. On the opposite, lower degrees (bachelor) dominate in the Harvard-MIT and Princeton-NYU communities, which also include  larger share of certified engineers and special degrees. Master graduates dominated in the Yale-Vanderbilt community. Finally, Columbia and Pennsylvania communities present a "cascade" distribution decreasing from master to doctorate, and eventually, bachelor degrees. 
+
+The final plot combines the range of qualification with the highest degrees obtained in each community: 
+```{r warning = FALSE, message = FALSE}
+
+louv_places_detail %>% 
+  group_by(cluster_name, LevelNbr) %>% 
+  count(degree_high) %>%
+  ggplot(aes(reorder(cluster_name, n), n, fill = degree_high)) +
+  geom_col(alpha = 0.8, show.legend = TRUE, position = "dodge") +
+  facet_grid(LevelNbr ~ cluster_name, scales = "free") + 
+  scale_y_continuous(breaks = integer_breaks())+
+  scale_x_discrete(
+    name = NULL, breaks = NULL) +
+  theme(legend.position = "bottom", 
+        legend.title = element_text(size=10),
+        legend.text = element_text(size=8), 
+        legend.box.background = element_rect(color="darkgrey", size=1)) +
+  guides(fill=guide_legend(nrow=2)) +
+  labs(y = "Number of places", x = NULL)  + 
+  labs(title = "American University Men of China: a place-based network analysis", 
+       subtitle = "Alumni communities (Louvain)", 
+       fill = "Level of qualification", 
+       caption = "Based on data extracted from the roster of the American University Club of China, 1936") 
+
+```
+
+
+# Conclusion
+
+From this exercise in community detection using Louvain algorithm, we can define three types of academic communities whose particular structures are shaped by their members' curricula:  
+
+  1.	Hairball-style communities with few outsiders are centered on strongly polarizing universities, such as Columbia (PG 1), Pennsylvania (PG3) and to a lesser extent, Chicago (PG4) and Harvard-MIT (PG6). These communities are associated with students’ lower mobility. 
+  2.	Chain-based, less compact structures reflect more egalitarian communities, centered on less polarizing universities and more mobile students. This group principally includes Princeton and New York University graduates (PG2). 
+  3.	Multipolar structures combine student' mobility with concentration around selected colleges, especially California, Cornell and Michigan (PG5).
+
+Similarly, we can identify three types of college-based communities based on their structure and membership: 
+
+  1.	Star-like communities are centered on a single, strongly polarizing university, especially Columbia-NYU (UG4), Michigan (UG7) and Purdue (PG8). These colleges attracted students from various backgrounds and allowed for more diverse educational opportunities. 
+  2.	Chain-based communities, such as Pennsylvania-Yale-Illinois (UG1), Harvard-MIT (UG2), Chicago (UG5) and Princeton-G. Washington (UG6) implied more constrained trajectories with a narrower range of educational choices. They usually referred to highly specialized curricula, such as architecture at the University of Pennsylvania, business at Harvard, science at MIT, and law at Chicago University. 
+  3.	Bipolar structures such as California-Cornell (UG3) offered various possible paths between the two core universities. 
+
+
+Community detection is not the end point. One can choose to focus on a specific community to examine its particular structure and membership in more detail. The output of community detection can also be used for sampling the whole population into more coherent sub-groups. It can serve a starting point for further analyses, such as sequence analysis or the analysis of professional affiliation networks. Alternatively, community membership can be treated as a new attribute for and used as supplementary variables in multidimensional analyses of places, students and colleges. Finally, the communities identified can help to better contextualize individual stories.
+
+In the next tutorial, we will see how we can filter our population of American University Men in order to trace the formation and evolution of their academic trajectories over time. 
