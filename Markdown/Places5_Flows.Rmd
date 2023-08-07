@@ -31,6 +31,14 @@ We start from the "aucplaces" dataset which contains several useful synthetic va
   * the highest degree obtained
   * the main field of study (corresponding to the most specialized or highest degree obtaied)
 
+Load packages
+```{r}
+library(tidyverse)
+library(networkD3)
+library(htmlwidgets)
+```
+
+
 Load data
 ```{r}
 library(readr)
@@ -83,7 +91,7 @@ write.csv(auc_rank, "auc_rank.csv")
 Reimport the manually curated dataset 
 ```{r}
 library(readr)
-auc_rank_solved <- read_csv("~/Places AUC/auc_rank_solved.csv")
+auc_rank_solved <- read_csv("~/Places AUC/Sequence/auc_rank_solved.csv")
 auc_rank_solved
 ```
 <br>
@@ -129,7 +137,7 @@ write.csv(auc_sequence_df, "auc_sequence_df.csv")
 <br>
 Re-import clean dataset
 ```{r}
-auc_sequence_clean <- read_csv("~/Places AUC/auc_sequence_clean.csv")
+auc_sequence_clean <- read_csv("~/Places AUC/Sequence/auc_sequence_clean.csv")
 ```
 <br> 
 Join with employment data 
